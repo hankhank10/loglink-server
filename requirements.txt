@@ -8,6 +8,7 @@ Flask==2.2.2
 Flask-Migrate==3.1.0
 Flask-SQLAlchemy==2.5.1
 gunicorn==20.1.0
+heyoo==0.0.6
 idna==3.3
 itsdangerous==2.1.2
 Jinja2==3.1.2
