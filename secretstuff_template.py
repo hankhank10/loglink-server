@@ -1,6 +1,6 @@
-# Get these credentials from spotify developer portal
-spotify_client_id = ""
-spotify_client_secret = ""
+# Whatsapp credentials
+whatsapp_token = ''
+whatsapp_phone_number_id = ""
+verify_token = ''
 
-# Choose a secret key for your app
-app_secret_key = "insert_a_secret_key_here"
+test_phone_number = ''
