@@ -1,0 +1,2 @@
+# whatsapp-logseq-server
+ 
