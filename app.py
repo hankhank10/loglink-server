@@ -31,6 +31,9 @@ messenger = WhatsApp(
     phone_number_id=secretstuff.whatsapp_phone_number_id
 )
 
+# Whatsapp APIs for calls outside Heyoo
+whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
+whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
 
 # Define the model in which the user data, tokens and messages are stored
 @dataclass
@@ -65,7 +68,6 @@ class Message(db.Model):
 app_uri = "https://whatsapp.logspot.top/"
 
 
-
 #################
 # HOUSEKEEPING #
 #################
@@ -84,8 +86,19 @@ def delete_delivered_messages(user_id):
 # WHATSAPP API CALLS #
 #####################
 
+def mark_message_read(message_id):
+    r = requests.post(
+        url = whatsapp_api_messages_uri,
+        headers = {"Authorization": "Bearer " + secretstuff.whatsapp_token},
 
+        json = {
+            "messaging_product": "whatsapp",
+            "message_id": message_id,
+            "status": "read"
+        }
+    )
 
+    return r
 
 
 #####################
@@ -180,15 +193,16 @@ def get_new_messages(token):
         if not message.delivered:
             message.delivered = True
             new_messages.append(message)
+            mark_message_read(message.whatsapp_message_id)
 
     db.session.commit()
 
-    if new_messages:
-        if len(new_messages) == 1:
-            response = "1 new message downloaded by LogSeq"
-        else:
-            response = f"{len(new_messages)} new messages downloaded by LogSeq"
-        messenger.send_message(response, user.phone_number)
+    #if new_messages:
+    #    if len(new_messages) == 1:
+    #        response = "1 new message downloaded by LogSeq"
+    #    else:
+    #        response = f"{len(new_messages)} new messages downloaded by LogSeq"
+    #    messenger.send_message(response, user.phone_number)
 
     delete_delivered_messages(user.id)
 
