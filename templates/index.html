@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Logseq ❤️ Spotify</title>
+    <link rel="stylesheet" href="/static/css/output.css">
+    <script src="https://kit.fontawesome.com/9d91eaa1d1.js" crossorigin="anonymous"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+</head>
+<body>
+
+    {% include 'flash.html' %}
+
+    <!-- This example requires Tailwind CSS v2.0+ -->
+    <div class="bg-indigo-200 bg-opacity-25">
+      <div class="max-w-7xl mx-auto py-8 px-4 sm:py-24 sm:px-6 lg:px-8">
+        <div class="lg:grid lg:grid-cols-2 lg:gap-8">
+          <h2 class="max-w-md mx-auto text-3xl tracking-tight font-bold text-indigo-900 text-center lg:max-w-xl lg:text-left">"We can work it out"</h2>
+          <div class="flow-root self-center mt-8 lg:mt-0">
+            <div class="-mt-4 -ml-8 flex flex-wrap justify-between lg:-ml-4">
+              <a href="https://logseq.com/" class="mt-4 ml-8 flex flex-grow flex-shrink-0 justify-center lg:flex-grow-0 lg:ml-4">
+                <img class="h-12" src="/static/images/LS3.png" alt="Tuple">
+              </a>
+              <div class="mt-4 ml-8 flex flex-grow flex-shrink-0 justify-center lg:flex-grow-0 lg:ml-4 text-4xl">
+                ❤️
+              </div>
+              <a href="https://www.spotify.com" class="mt-4 ml-8 flex flex-grow flex-shrink-0 justify-center lg:flex-grow-0 lg:ml-4">
+                <img class="h-12" src="/static/images/Spotify.png" alt="Spotify">
+              </a>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- This example requires Tailwind CSS v2.0+ -->
+    <div class="bg-indigo-700">
+      <div class="max-w-2xl mx-auto text-center py-4 px-4 sm:py-10 sm:px-6 lg:px-8">
+        <h2 class="text-3xl tracking-tight font-bold text-white sm:text-4xl sm:tracking-tight">
+          <span class="block">Log your recently listened</span>
+          <span class="block">Spotify songs in Logseq</span>
+        </h2>
+        <div class="mt-10 mb-5 inline-flex items-center justify-center">
+            <img class="rounded-lg object-cover shadow-lg" src="/static/images/video_demo.gif" alt="Video demo">
+        </div>
+        <a href="{{ url_for('spotify_authenticate_redirect') }}" class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 sm:w-auto">
+            <i class="fa-brands fa-spotify mr-4 fa-xl"></i>
+            Click to authenticate with Spotify
+        </a>
+      </div>
+    </div>
+
+    <div class="bg-white mx-auto text-center">
+
+    </div>
+
+    <!-- This example requires Tailwind CSS v2.0+ -->
+    <div class="bg-white">
+      <div class="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+        <h2 class="text-3xl tracking-tight font-bold text-gray-900 text-center">Frequently asked questions</h2>
+        <div class="mt-12">
+          <dl class="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-12 lg:grid-cols-3">
+            <div>
+              <dt class="text-lg leading-6 font-medium text-gray-900">Is this officially affiliated with Spotify or Logseq?</dt>
+              <dd class="mt-2 text-base text-gray-500">No. It's an unofficial plugin which uses the Spotify API.</dd>
+            </div>
+            <div>
+              <dt class="text-lg leading-6 font-medium text-gray-900">How do I get this working?</dt>
+              <dd class="mt-2 text-base text-gray-500">1. Download the plugin from the LogSeq Plugin Marketplace. [Note: During BETA period please download from <a class="text-indigo-600" href="https://github.com/hankhank10/i-listened-plugin/releases/download/v0.0.2/i-listened-plugin-v0.0.2.zip">github</a> instead]</dd>
+              <dd class="mt-2 text-base text-gray-500">2. Click the button above to authenticate with Spotify.</dd>
+              <dd class="mt-2 text-base text-gray-500">3. Copy the generated token and paste it into the plugin settings on LogSeq.</dd>
+              <dd class="mt-2 text-base text-gray-500">4. Use the slash command <span class="text-red-400">/spotify</span> in your LogSeq journal.</dd>
+            </div>
+            <div>
+              <dt class="text-lg leading-6 font-medium text-gray-900">How secure is this?</dt>
+              <dd class="mt-2 text-base text-gray-500">This site does not collect your spotify password: that is all authenticated through the Spotify API which you validate with.</dd>
+              <dd class="mt-2 text-base text-gray-500">The code you are provided with does provide public access to your listening history if you were to share it, so don't do that.</dd>
+            </div>
+            <div>
+              <dt class="text-lg leading-6 font-medium text-gray-900">Is this open source?</dt>
+              <dd class="mt-2 text-base text-gray-500">Of course! The source code for the server is
+                  <a class="text-indigo-600" href="https://github.com/hankhank10/i-listened-to">here</a>
+                  and the source code for the plugin is
+                  <a class="text-indigo-600" href="https://github.com/hankhank10/i-listened-plugin">here</a>.
+              </dd>
+              <dd class="mt-2 text-base text-gray-500">
+                  If you are particularly security conscious about your listening history then you are welcome to use the server source code to deploy your own self-hosted version.
+              </dd>
+            </div>
+            <div>
+              <dt class="text-lg leading-6 font-medium text-gray-900">Does this come with a warranty and support?</dt>
+              <dd class="mt-2 text-base text-gray-500">Absolutely no warranty. If you encounter an issue or need support then please
+                  <a class="text-indigo-600" href="https://github.com/hankhank10/i-listened-plugin/issues">raise an issue on github.</a>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-lg leading-6 font-medium text-gray-900">What&#039;s the best thing about Switzerland?</dt>
+              <dd class="mt-2 text-base text-gray-500">I don&#039;t know, but the flag is a big plus..</dd>
+            </div>
+
+            <!-- More questions... -->
+          </dl>
+        </div>
+      </div>
+    </div>
+
+
+
+
+</body>
+</html>
