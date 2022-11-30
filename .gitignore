@@ -1,0 +1,5 @@
+*.pyc
+/migrations/*
+*.sqlite3
+secretstuff.py
+.idea/*
