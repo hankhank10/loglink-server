@@ -93,6 +93,7 @@ def mark_message_read(message_id):
     )
     return r
 
+
 def random_token():
     return "whatsapp"+secrets.token_hex(4)
 
@@ -178,7 +179,7 @@ def webhook():
                         messenger.send_message("Your refreshed token will be sent in the next message", mobile)
                         messenger.send_message(user.token, mobile)
 
-                    # If the contain a command only, exit the function so it is not added to the database
+                    # If the message contains a command only, exit the function so it is not added to the database
                     if message_contents.lower() in command_list:
                         return "ok"
 
@@ -231,7 +232,7 @@ def get_new_messages(token):
     #        response = f"{len(new_messages)} new messages downloaded by LogSeq"
     #    messenger.send_message(response, user.phone_number)
 
-    delete_delivered_messages(user.id)
+    #delete_delivered_messages(user.id)
 
     return jsonify({
         'status': 'success',
