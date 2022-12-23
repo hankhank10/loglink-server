@@ -207,12 +207,38 @@ def webhook():
     return "ok"
 
 
-@app.route('/get_new_messages/<token>/', methods=['GET'])
-def get_new_messages(token):
-    user = User.query.filter_by(token=token).first()
+@app.route('/get_new_messages/', methods=['POST'])
+def get_new_messages():
+
+    # Check that we have been sent JSON and that it is valid and matches a user
+    try:
+        posted_json = request.get_json()
+        user_id = posted_json['user_id']
+    except:
+        return jsonify({
+            'status': 'error',
+            'error_type': 'failure_parsing_json',
+            'message': 'Failure parsing JSON or no JSON received'
+        }), 400
+
+    print(posted_json)
+
+    if not user_id:
+        return {
+            'status': 'error',
+            'error_type': 'no_user_id',
+            'message': 'No user_id provided in JSON'
+        }, 400
+
+    # Get the user record
+    user = User.query.filter_by(token=user_id).first()
 
     if not user:
-        return jsonify({"error": "Invalid token"}), 401
+        return {
+            'status': 'error',
+            'error_type': 'user_not_found',
+            'message': 'No user found with that token. Try refreshing your token at ' + app_uri + ' and is ensure it is correctly entered in settings.'
+        }, 404
 
     messages = Message.query.filter_by(user_id=user.id).all()
 
