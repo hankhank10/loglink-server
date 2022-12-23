@@ -31,9 +31,10 @@ messenger = WhatsApp(
     phone_number_id=secretstuff.whatsapp_phone_number_id
 )
 
-# Whatsapp APIs for calls outside Heyoo
+# Whatsapp APIs addresses for calls outside Heyoo
 whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
 whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
+
 
 # Define the model in which the user data, tokens and messages are stored
 @dataclass
@@ -80,25 +81,20 @@ def delete_delivered_messages(user_id):
     db.session.commit()
 
 
-
-
-#####################
-# WHATSAPP API CALLS #
-#####################
-
 def mark_message_read(message_id):
     r = requests.post(
         url = whatsapp_api_messages_uri,
         headers = {"Authorization": "Bearer " + secretstuff.whatsapp_token},
-
         json = {
             "messaging_product": "whatsapp",
             "message_id": message_id,
             "status": "read"
         }
     )
-
     return r
+
+def random_token():
+    return "whatsapp"+secrets.token_hex(4)
 
 
 #####################
@@ -144,7 +140,7 @@ def webhook():
 
                 # If it is a new user, create the account and return the token
                 if not user:
-                    user = User(phone_number=mobile, token="whatsapp"+secrets.token_hex(4))
+                    user = User(phone_number=mobile, token=random_token())
                     db.session.add(user)
                     db.session.commit()
                     logging.info("New user: %s", mobile)
@@ -154,6 +150,37 @@ def webhook():
 
                 # If it is an existing user, add the message to the database
                 if user:
+
+                    message_contents = messenger.get_message(data)
+
+                    # Check whether the message contains a command
+
+                    command_list = [
+                        "help",
+                        "token",
+                        "refresh"
+                    ]
+
+                    if message_contents.lower() == "help":
+                        messenger.send_message("Command list:", mobile)
+                        messenger.send_message("TOKEN : received a reminder of your token", mobile)
+                        messenger.send_message("REFRESH : receive a new token if, for instance, your previous token is compromised", mobile)
+                        messenger.send_message("Please visit " + app_uri + " for more information on how to use the app", mobile)
+
+                    if message_contents.lower() == "token":
+                        messenger.send_message("Your token will be sent in the next message", mobile)
+                        messenger.send_message(user.token, mobile)
+                        messenger.send_message("If you want to refresh your token, please send the word REFRESH to receive a new token", mobile)
+
+                    if message_contents.lower() == "refresh":
+                        user.token = random_token()
+                        db.session.commit()
+                        messenger.send_message("Your refreshed token will be sent in the next message", mobile)
+                        messenger.send_message(user.token, mobile)
+
+                    # If the contain a command only, exit the function so it is not added to the database
+                    if message_contents.lower() in command_list:
+                        return "ok"
 
                     message_id = messenger.get_message_id(data)
 
@@ -165,7 +192,7 @@ def webhook():
                     new_message = Message(
                         user_id=user.id,
                         whatsapp_message_id=message_id,
-                        contents=messenger.get_message(data),
+                        contents=message_contents,
                         timestamp=datetime.now(),
                     )
                     db.session.add(new_message)
