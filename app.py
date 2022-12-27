@@ -74,7 +74,8 @@ app_uri = "https://whatsapp.logspot.top/"
 # ENCRYPTION #
 #################
 
-encrypt = False
+encrypt = True
+decrypt = False
 
 fernet = Fernet(secretstuff.at_rest_encryption_key)
 
