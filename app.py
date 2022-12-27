@@ -266,7 +266,10 @@ def get_new_messages():
     for message in messages:
         if not message.delivered:
             message.delivered = True
-            new_messages.append(message)
+
+            message_in_memory = message
+            #message_in_memory.contents = decrypt_at_rest(message_in_memory.contents)
+            new_messages.append(message_in_memory)
             mark_message_read(message.whatsapp_message_id)
 
     db.session.commit()
