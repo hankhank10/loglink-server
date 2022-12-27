@@ -5,6 +5,8 @@ import secrets
 import logging
 from dataclasses import dataclass
 
+from cryptography.fernet import Fernet
+
 # Import flask
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
@@ -67,6 +69,18 @@ class Message(db.Model):
 
 # Define global paths and uris
 app_uri = "https://whatsapp.logspot.top/"
+
+#################
+# ENCRYPTION #
+#################
+
+fernet = Fernet(secretstuff.at_rest_encryption_key)
+
+def encrypt_at_rest(string):
+    return fernet.encrypt(string.encode())
+
+def decrypt_at_rest(string):
+    return fernet.decrypt(string).decode()
 
 
 #################
@@ -193,7 +207,7 @@ def webhook():
                     new_message = Message(
                         user_id=user.id,
                         whatsapp_message_id=message_id,
-                        contents=message_contents,
+                        contents=encrypt_at_rest(message_contents),
                         timestamp=datetime.now(),
                     )
                     db.session.add(new_message)
