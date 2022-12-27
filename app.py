@@ -74,13 +74,18 @@ app_uri = "https://whatsapp.logspot.top/"
 # ENCRYPTION #
 #################
 
+encrypt = False
+
 fernet = Fernet(secretstuff.at_rest_encryption_key)
 
 def encrypt_at_rest(string):
-    return str(fernet.encrypt(string.encode()))
+    if encrypt:
+        return str(fernet.encrypt(string.encode()))
+    else:
+        return string
 
 def decrypt_at_rest(string):
-    return "hello"
+    return string
 
 
 #################
@@ -260,7 +265,7 @@ def get_new_messages():
     for message in messages:
         if not message.delivered:
             message.delivered = True
-            new_messages.append(decrypt_at_rest(message))
+            new_messages.append(message)
             mark_message_read(message.whatsapp_message_id)
 
     db.session.commit()
