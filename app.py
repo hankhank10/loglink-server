@@ -57,7 +57,7 @@ class Message(db.Model):
 
     user_id = db.Column(db.String(80), db.ForeignKey('user.id'))
 
-    contents:str = db.Column(db.String(5000))
+    contents:str = db.Column(db.LargeBinary)
     timestamp:datetime = db.Column(db.DateTime)
     delivered:bool = db.Column(db.Boolean, default=False)
 
@@ -84,10 +84,7 @@ with open("secret_key", "rb") as key_file:
 fernet = Fernet(at_rest_encryption_key)
 
 def encrypt_at_rest(string):
-    if encrypt:
-        return str(fernet.encrypt(string.encode()))
-    else:
-        return string
+    return fernet.encrypt(string.encode())
 
 def decrypt_at_rest(string):
     string = string.encode()
