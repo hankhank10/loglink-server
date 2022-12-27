@@ -268,7 +268,7 @@ def get_new_messages():
             message.delivered = True
 
             message_in_memory = message
-            #message_in_memory.contents = decrypt_at_rest(message_in_memory.contents)
+            message_in_memory.contents = decrypt_at_rest(message_in_memory.contents)
             new_messages.append(message_in_memory)
             mark_message_read(message.whatsapp_message_id)
 
