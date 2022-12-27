@@ -57,7 +57,7 @@ class Message(db.Model):
 
     user_id = db.Column(db.String(80), db.ForeignKey('user.id'))
 
-    contents:str = db.Column(db.LargeBinary)
+    contents:str = db.Column(db.String(10000))
     timestamp:datetime = db.Column(db.DateTime)
     delivered:bool = db.Column(db.Boolean, default=False)
 
@@ -69,25 +69,6 @@ class Message(db.Model):
 
 # Define global paths and uris
 app_uri = "https://whatsapp.logspot.top/"
-
-#################
-# ENCRYPTION #
-#################
-
-encrypt = True
-decrypt = False
-
-# Get the at rest encryption key from the file
-with open("secret_key", "rb") as key_file:
-    at_rest_encryption_key = key_file.read()
-
-fernet = Fernet(at_rest_encryption_key)
-
-def encrypt_at_rest(string):
-    return fernet.encrypt(string.encode())
-
-def decrypt_at_rest(string):
-    return fernet.decrypt(string).decode()
 
 
 #################
@@ -214,7 +195,7 @@ def webhook():
                     new_message = Message(
                         user_id=user.id,
                         whatsapp_message_id=message_id,
-                        contents=encrypt_at_rest(message_contents),
+                        contents=message_contents,
                         timestamp=datetime.now(),
                     )
                     db.session.add(new_message)
@@ -269,7 +250,6 @@ def get_new_messages():
             message.delivered = True
 
             message_in_memory = message
-            message_in_memory.contents = decrypt_at_rest(message_in_memory.contents)
             new_messages.append(message_in_memory)
             mark_message_read(message.whatsapp_message_id)
 
