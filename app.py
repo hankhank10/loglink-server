@@ -86,7 +86,7 @@ def encrypt_at_rest(string):
         return string
 
 def decrypt_at_rest(string):
-    return str(string)
+    return str(fernet.decrypt(string))
 
 
 #################
