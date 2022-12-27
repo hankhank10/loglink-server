@@ -1,6 +1,6 @@
 rm -r migrations
-rm project/*.sqlite3
-rm project/*.sqlite
+rm *.sqlite3
+rm *.sqlite
 
 flask db init
 flask db migrate
