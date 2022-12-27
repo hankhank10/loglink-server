@@ -77,7 +77,11 @@ app_uri = "https://whatsapp.logspot.top/"
 encrypt = True
 decrypt = False
 
-fernet = Fernet(secretstuff.at_rest_encryption_key)
+# Get the at rest encryption key from the file
+with open("secret_key", "rb") as key_file:
+    at_rest_encryption_key = key_file.read()
+
+fernet = Fernet(at_rest_encryption_key)
 
 def encrypt_at_rest(string):
     if encrypt:
