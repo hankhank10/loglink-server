@@ -172,34 +172,39 @@ def webhook():
                 f"New Message; sender:{mobile} name:{name} type:{message_type}"
             )
 
-            if message_type == "interactive":
-                message_response = messenger.get_interactive_response(data)
-                interactive_type = message_response.get("type")
-                message_id = message_response[interactive_type]["id"]
-                message_text = message_response[interactive_type]["title"]
-                logging.info(f"Interactive Message; {message_id}: {message_text}")
+            # Check if this is a new user
+            user = User.query.filter_by(phone_number=mobile).first()
 
-            if message_type == "text":
-                # Check if this is a new user
-                user = User.query.filter_by(phone_number=mobile).first()
-
-                # If it is a new user, create the account and return the token
+            # If it is a new user, create the account and return the token
+            if not user:
+                user = create_new_user(
+                    account_type="whatsapp",
+                    phone_number=mobile
+                )
                 if not user:
-                    user = create_new_user(
-                        account_type="whatsapp",
-                        phone_number = mobile
-                    )
-                    if not user:
-                        logging.error("Failed to create new user")
-                        return "Failed to create new user"
+                    logging.error("Failed to create new user")
+                    return "Failed to create new user"
 
-                    logging.info("New user: %s", user.phone_number)
-                    messenger.send_message("Welcome to LogLink, your token will be send in the next message", mobile)
-                    messenger.send_message(user.token, mobile)
-                    return "ok"
+                logging.info("New user: %s", user.phone_number)
+                messenger.send_message("Welcome to LogLink, your token will be send in the next message", mobile)
+                messenger.send_message(user.token, mobile)
+                return "ok"
 
-                # If it is an existing user, add the message to the database
-                if user:
+            if user:
+
+                if message_type == "interactive":
+                    message_response = messenger.get_interactive_response(data)
+                    interactive_type = message_response.get("type")
+                    message_id = message_response[interactive_type]["id"]
+
+                    if message_id == "token_reminder":
+                        messenger.send_message("Your token will be sent in the next message", mobile)
+                        messenger.send_message(user.token, mobile)
+                        messenger.send_message(
+                            "If you want to refresh your token, please send the word REFRESH to receive a new token",
+                            mobile)
+
+                if message_type == "text":
                     message_contents = messenger.get_message(data)
 
                     # Check whether the message contains a command
