@@ -4,6 +4,7 @@ from datetime import datetime, time, timedelta
 import secrets
 import logging
 from dataclasses import dataclass
+import imgur
 
 from cryptography.fernet import Fernet
 
@@ -373,7 +374,22 @@ def webhook():
                     uploads_folder = "media_uploads"
                     random_filename = f"{uploads_folder}/{secrets.token_hex(16)}"
                     image_filename = messenger.download_media(image_url, mime_type, random_filename)
-                    print (image_filename)
+
+                    # Upload the image to imgur
+                    imgur_result = imgur.upload_image(f"{uploads_folder}/{image_filename}")
+                    if imgur_result:
+                        logging.info("Image uploaded to imgur at url", imgur_result)
+
+                        message_contents = f"📷 {imgur_result}"
+
+                        result = add_new_message(
+                            user_id=user.id,
+                            received_from="whatsapp",
+                            message_contents=message_contents,
+                            whatsapp_message_id=message_id
+                        )
+                    else:
+                        logging.error("Failed to upload image to imgur")
 
                 if result:
                     logging.info("Message added to database")
