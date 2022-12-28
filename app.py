@@ -182,7 +182,7 @@ def webhook():
                     logging.info("New user: %s", user.phone_number)
                     messenger.send_message("Welcome to LogLink, your token will be send in the next message", mobile)
                     messenger.send_message(user.token, mobile)
-                    return True
+                    return "ok"
 
                 # If it is an existing user, add the message to the database
                 if user:
@@ -230,9 +230,9 @@ def webhook():
                     db.session.add(new_message)
                     db.session.commit()
 
-                    return True
+                    return "ok"
 
-    return True
+    return "ok"
 
 
 @app.route('/get_new_messages/', methods=['POST'])
