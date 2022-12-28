@@ -206,7 +206,9 @@ def webhook():
                             recipient_id=mobile,
                             button={
                                 "type": "button",
-                                "header": "LogLink Help",
+                                "header": {
+                                    "text": "LogLink Help"
+                                },
                                 "body": {
                                     "text": "How can I help you?"
                                 },
