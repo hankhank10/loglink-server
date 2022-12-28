@@ -207,7 +207,7 @@ def webhook():
                             button={
                                 "type": "button",
                                 "body": {
-                                    "text": "You can ask for a reminder of your token or request a new one below"
+                                    "text": "How can I help you?"
                                 },
                                 "action": {
                                     "buttons": [
@@ -223,6 +223,13 @@ def webhook():
                                             "reply": {
                                                 "id": "new_token",
                                                 "title": "Request a new token"
+                                            }
+                                        },
+                                        {
+                                            "type": "reply",
+                                            "reply": {
+                                                "id": "more_help",
+                                                "title": "I need more help"
                                             }
                                         }
                                     ]
