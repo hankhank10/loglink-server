@@ -116,7 +116,6 @@ def create_new_user(
     approved=True,
     phone_number=None
 ):
-
     if account_type.lower() == "whatsapp":
         new_user = User(
             phone_number=phone_number,
@@ -129,6 +128,36 @@ def create_new_user(
         return new_user
 
     return False
+
+def add_new_message(
+    user_id,
+    received_from,
+    message_contents,
+    whatsapp_message_id=None,
+):
+
+    # Get the user
+    user = User.query.filter_by(id=user_id).first()
+
+    if not user:
+        return False
+
+    # Add to the user's API count
+    user.api_call_count = user.api_call_count + 1
+    db.session.commit()
+
+    # Create the message
+    new_message = Message(
+        user_id=user_id,
+        whatsapp_message_id=whatsapp_message_id,
+        received_from=received_from,
+        contents=message_contents,
+        timestamp=datetime.now(),
+    )
+    db.session.add(new_message)
+    db.session.commit()
+
+    return True
 
 
 #####################
@@ -192,24 +221,29 @@ def webhook():
 
             if user:
 
+                # Set the default to be no result
+                result = False
+
                 if message_type == "interactive":
                     message_response = messenger.get_interactive_response(data)
                     interactive_type = message_response.get("type")
                     message_id = message_response[interactive_type]["id"]
 
                     if message_id == "token_reminder":
-                        messenger.send_message("Your token will be sent in the next message", mobile)
+                        messenger.send_message("Your token will be sent in the next message (for easy copying).", mobile)
                         messenger.send_message(user.token, mobile)
 
-                    if message_id == "token_refresh":
+                    if message_id == "new_token":
                         user.token = random_token()
                         db.session.commit()
-                        messenger.send_message("Your refreshed token will be sent in the next message", mobile)
+                        messenger.send_message("Resetting your token.", mobile)
+                        messenger.send_message("Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.", mobile)
                         messenger.send_message(user.token, mobile)
 
-                    if message_id == "more help":
-                        messenger.send_message("Please visit http://loglink.it/ for more assistance", mobile)
+                    if message_id == "more_help":
+                        messenger.send_message("Please visit https://loglink.it/ for more assistance", mobile)
 
+                    result = True
 
                 if message_type == "text":
                     message_contents = messenger.get_message(data)
@@ -218,9 +252,11 @@ def webhook():
                     command_list = [
                         "help",
                         "token",
-                        "refresh"
+                        "refresh",
+                        "readme"
                     ]
 
+                    # Deal with help commands
                     if message_contents.lower() in command_list:
                         messenger.send_reply_button(
                             recipient_id=mobile,
@@ -265,24 +301,77 @@ def webhook():
                     if message_contents.lower() in command_list:
                         return "ok"
 
+
+                    # Add the message to the database
                     message_id = messenger.get_message_id(data)
-
-                    user.api_call_count = user.api_call_count + 1
-                    db.session.commit()
-
-                    new_message = Message(
+                    result = add_new_message(
                         user_id=user.id,
-                        whatsapp_message_id=message_id,
                         received_from="whatsapp",
-                        contents=message_contents,
-                        timestamp=datetime.now(),
+                        message_contents=message_contents,
+                        whatsapp_message_id=message_id
                     )
-                    db.session.add(new_message)
-                    db.session.commit()
 
+                    if result:
+                        logging.info("Message added to database")
+                        return "ok"
+                    else:
+                        logging.error("Failed to add message to database")
+                        return "Failed to add message to database"
+
+                if message_type == "location":
+                    message_id = messenger.get_message_id(data)
+                    message_location = messenger.get_location(data)
+
+                    # Get all the location data
+                    location_latitude = message_location["latitude"] # always included
+                    location_longitude = message_location["longitude"] # always included
+
+                    # Optional fields
+                    location_name = message_location.get("name")
+                    location_address = message_location.get("address")
+                    location_url = message_location.get("url")
+
+                    location_pin = "📍"
+                    location_details = ""
+
+                    if location_name:
+                        location_details = location_name
+
+                    if location_address:
+                        if location_details:
+                            location_details = f"{location_details}, "
+                        location_details = f"{location_details}{location_address}"
+                    else:
+                        if location_details:
+                            location_details = f"{location_details} {location_latitude}, {location_longitude})"
+                        else:
+                            location_details = f"Lat: {location_latitude}, Lon: {location_longitude}"
+
+                    if location_url:
+                        location_details = f"{location_details} ({location_url})"
+
+                    google_maps_base_url = "https://maps.google.com/maps?q="
+                    google_maps_address = f"{google_maps_base_url}{location_latitude},{location_longitude}"
+
+                    message_contents = f"{location_pin} {location_details} ({google_maps_address})"
+
+                    print (message_contents)
+
+                    result = add_new_message(
+                        user_id=user.id,
+                        received_from="whatsapp",
+                        message_contents=message_contents,
+                        whatsapp_message_id=message_id
+                    )
+
+                if result:
+                    logging.info("Message added to database")
                     return "ok"
+                else:
+                    logging.error("Failed to add message to database")
+                    return "Failed to add message to database"
 
-    return "ok"
+    return "no change"
 
 
 #####################
