@@ -302,7 +302,6 @@ def webhook():
                     if message_contents.lower() in command_list:
                         return "ok"
 
-
                     # Add the message to the database
                     message_id = messenger.get_message_id(data)
                     result = add_new_message(
@@ -366,21 +365,30 @@ def webhook():
                     )
 
                 if message_type == "image":
+                    message_id = messenger.get_message_id(data)
                     image = messenger.get_image(data)
+
                     image_id, mime_type = image["id"], image["mime_type"]
                     image_url = messenger.query_media_url(image_id)
 
+                    # Get the caption if there is one
+                    caption = image.get("caption")
+
                     # Download the image to a temporary file with a random name
                     uploads_folder = "media_uploads"
-                    random_filename = f"{uploads_folder}/{secrets.token_hex(16)}"
-                    image_filename = messenger.download_media(image_url, mime_type, random_filename)
+                    random_filename = secrets.token_hex(16)
+                    random_path = f"{uploads_folder}/{random_filename}"
+                    image_filename = messenger.download_media(image_url, mime_type, random_path)
 
                     # Upload the image to imgur
-                    imgur_result = imgur.upload_image(f"{uploads_folder}/{image_filename}")
+                    imgur_result = imgur.upload_image(image_filename)
                     if imgur_result:
-                        logging.info("Image uploaded to imgur at url", imgur_result)
+                        logging.info(f"Image uploaded to imgur at url {imgur_result}")
 
-                        message_contents = f"📷 {imgur_result}"
+                        if caption:
+                            message_contents = f"{caption} ![{caption}]({imgur_result})"
+                        else:
+                            message_contents = imgur_result
 
                         result = add_new_message(
                             user_id=user.id,
