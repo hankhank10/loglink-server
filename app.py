@@ -15,6 +15,7 @@ from flask_migrate import Migrate
 
 # Import secrets
 import secretstuff
+import whitelist
 
 # Create the app
 app = Flask(__name__)
@@ -37,6 +38,9 @@ messenger = WhatsApp(
 # Whatsapp APIs addresses for calls outside Heyoo
 whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
 whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
+
+# Global app settings
+whitelist_only = True
 
 
 # Define the model in which the user data, tokens and messages are stored
@@ -117,6 +121,11 @@ def create_new_user(
     approved=True,
     phone_number=None
 ):
+    # If whitelist only, check if the phone number is in the whitelist
+    if whitelist_only:
+        if phone_number not in whitelist.acceptable_numbers:
+            return False
+
     if account_type.lower() == "whatsapp":
         new_user = User(
             phone_number=phone_number,
@@ -129,6 +138,7 @@ def create_new_user(
         return new_user
 
     return False
+
 
 def add_new_message(
     user_id,
@@ -169,6 +179,7 @@ def add_new_message(
 @app.route('/')
 def index():
     return "API is running"
+
 
 #####################
 # WHATSAPP          #
@@ -213,6 +224,10 @@ def webhook():
                 )
                 if not user:
                     logging.error("Failed to create new user")
+                    if whitelist_only:
+                        messenger.send_message("There was a problem creating your account. This may be because your mobile number is not on the whitelist.", mobile)
+                    else:
+                        messenger.send_message("There was a problem creating your account.", mobile)
                     return "Failed to create new user"
 
                 logging.info("New user: %s", user.phone_number)
