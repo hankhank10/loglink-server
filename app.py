@@ -202,10 +202,30 @@ def webhook():
                     ]
 
                     if message_contents.lower() == "help":
-                        messenger.send_message("Command list:", mobile)
-                        messenger.send_message("TOKEN : received a reminder of your token", mobile)
-                        messenger.send_message("REFRESH : receive a new token if, for instance, your previous token is compromised", mobile)
-                        messenger.send_message("Please visit " + app_uri + " for more information on how to use the app", mobile)
+                        messenger.send_button(
+                            recipient_id=mobile,
+                            button={
+                                "header": "Header Testing",
+                                "body": "Body Testing",
+                                "footer": "Footer Testing",
+                                "action": {
+                                    "button": "Button Testing",
+                                    "sections": [
+                                        {
+                                            "title": "iBank",
+                                            "rows": [
+                                                {"id": "row 1", "title": "Send Money", "description": ""},
+                                                {
+                                                    "id": "row 2",
+                                                    "title": "Withdraw money",
+                                                    "description": "",
+                                                },
+                                            ],
+                                        }
+                                    ],
+                                },
+                            },
+                        )
 
                     if message_contents.lower() == "token":
                         messenger.send_message("Your token will be sent in the next message", mobile)
