@@ -215,7 +215,7 @@ def webhook():
                                             "type": "reply",
                                             "reply": {
                                                 "id": "token_reminder",
-                                                "title": "Remind me of my token"
+                                                "title": "Send token reminder"
                                             }
                                         },
                                         {
