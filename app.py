@@ -363,8 +363,6 @@ def webhook():
 
                     message_contents = f"{location_pin} {location_details} {google_maps_address}"
 
-                    print (message_contents)
-
                     result = add_new_message(
                         user_id=user.id,
                         received_from="whatsapp",
