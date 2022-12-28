@@ -215,15 +215,15 @@ def get_new_messages():
     # Check that we have been sent JSON and that it is valid and matches a user
     try:
         posted_json = request.get_json()
+        print(posted_json)
         user_id = posted_json['user_id']
     except:
         return jsonify({
             'status': 'error',
             'error_type': 'failure_parsing_json',
-            'message': 'Failure parsing JSON or no JSON received'
+            'message': 'Failure parsing JSON or no JSON received',
         }), 400
 
-    print(posted_json)
 
     if not user_id:
         return {
