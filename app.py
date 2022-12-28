@@ -171,6 +171,14 @@ def webhook():
             logging.info(
                 f"New Message; sender:{mobile} name:{name} type:{message_type}"
             )
+
+            if message_type == "interactive":
+                message_response = messenger.get_interactive_response(data)
+                interactive_type = message_response.get("type")
+                message_id = message_response[interactive_type]["id"]
+                message_text = message_response[interactive_type]["title"]
+                logging.info(f"Interactive Message; {message_id}: {message_text}")
+
             if message_type == "text":
                 # Check if this is a new user
                 user = User.query.filter_by(phone_number=mobile).first()
