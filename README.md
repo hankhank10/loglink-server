@@ -2,6 +2,11 @@
 
 LogLink allows you to add to your LogSeq graph more easily from a variety of sources, with a focus on mobile.
 
+Quick demo:
+
+https://user-images.githubusercontent.com/25515609/209876700-e77ef220-0504-4bd1-8f4d-cb1712aeb5a7.mp4
+
+
 Functioning integrations:
 - WhatsApp (beta)
 
