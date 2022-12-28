@@ -7,6 +7,8 @@ Quick demo:
 https://user-images.githubusercontent.com/25515609/209876700-e77ef220-0504-4bd1-8f4d-cb1712aeb5a7.mp4
 
 
+## Integrations
+
 Functioning integrations:
 - WhatsApp (beta)
 
@@ -20,7 +22,7 @@ Planned integrations:
 
 The simple workflow is that you send a message from your phone (or desktop) to a number via WhatsApp. You can send text (including special terms like TODO, [[links]] or #hashtags), locations (which resolve nicely including a goodle maps link) or images/videos (which are automatically uploaded to imgur and then inserted into your graph). The service stores these messages until you log into LogSeq on desktop and sync them to your graph via a slash command, at which point they are deleted from the server.
 
-I use this to quickly add to my todo list (eg send a WhatsApp message saying TODO Buy milk or TODO Call [[John Smith]]), send myself quick notes or send images of things I want to remember (eg a photo of a book I want to read).
+I use this to quickly add to my todo list (eg send a WhatsApp message saying `TODO Buy milk` or `TODO Call [[John Smith]]`), send myself quick notes or send images of things I want to remember (eg a photo of a book I want to read).
 
 I am keen to find an intrepid group (5-10) of beta testers to help me test this out. I am even more keen to find anyone keen to collaborate with on this.
 
