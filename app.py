@@ -44,7 +44,10 @@ class User(db.Model):
     id:int = db.Column(db.Integer, primary_key=True)
 
     token = db.Column(db.String(80), unique=True, nullable=False)
-    phone_number = db.Column(db.String(20), unique=True, nullable=False)
+    phone_number = db.Column(db.String(20), unique=True, nullable=True)
+
+    account_type = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+    approved = db.Column(db.Boolean, nullable=False, default=True)
 
     api_call_count:int = db.Column(db.Integer, default=0)
 
@@ -53,7 +56,9 @@ class User(db.Model):
 class Message(db.Model):
     id:int = db.Column(db.Integer, primary_key=True)
 
-    whatsapp_message_id:str = db.Column(db.String(100), nullable=False)
+    received_from = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+
+    whatsapp_message_id:str = db.Column(db.String(100))
 
     user_id = db.Column(db.String(80), db.ForeignKey('user.id'))
 
@@ -68,7 +73,7 @@ class Message(db.Model):
 
 
 # Define global paths and uris
-app_uri = "https://whatsapp.logspot.top/"
+app_uri = "https://loglink.it/"
 
 
 #################
@@ -96,8 +101,31 @@ def mark_message_read(message_id):
     return r
 
 
-def random_token():
-    return "whatsapp"+secrets.token_hex(4)
+def random_token(token_type="whatsapp"):
+    length = 4
+    if token_type == "whatsapp":
+        return "whatsapp"+secrets.token_hex(length)
+    return "unknown"+secrets.token_hex(length)
+
+
+def create_new_user(
+    account_type="whatsapp",
+    approved=True,
+    phone_number=None
+):
+
+    if account_type.lower() == "whatsapp":
+        new_user = User(
+            phone_number=phone_number,
+            token=random_token(),
+            account_type="whatsapp",
+            approved=approved
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        return new_user
+
+    return False
 
 
 #####################
@@ -110,7 +138,7 @@ def index():
     return "Hello world"
 
 
-@app.route('/webhook', methods=['GET', 'POST'])
+@app.route('/whatsapp/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == "GET":
         if request.args.get("hub.verify_token") == secretstuff.verify_token:
@@ -143,21 +171,24 @@ def webhook():
 
                 # If it is a new user, create the account and return the token
                 if not user:
-                    user = User(phone_number=mobile, token=random_token())
-                    db.session.add(user)
-                    db.session.commit()
-                    logging.info("New user: %s", mobile)
-                    messenger.send_message("Welcome to LogText, your token will be send in the next message", mobile)
+                    user = create_new_user(
+                        account_type="whatsapp",
+                        phone_number = mobile
+                    )
+                    if not user:
+                        logging.error("Failed to create new user")
+                        return "Failed to create new user"
+
+                    logging.info("New user: %s", user.phone_number)
+                    messenger.send_message("Welcome to LogLink, your token will be send in the next message", mobile)
                     messenger.send_message(user.token, mobile)
-                    return "ok"
+                    return True
 
                 # If it is an existing user, add the message to the database
                 if user:
-
                     message_contents = messenger.get_message(data)
 
                     # Check whether the message contains a command
-
                     command_list = [
                         "help",
                         "token",
@@ -190,8 +221,6 @@ def webhook():
                     user.api_call_count = user.api_call_count + 1
                     db.session.commit()
 
-                    #logging.info("User: %s, API calls: %s", mobile, user.api_call_count)
-
                     new_message = Message(
                         user_id=user.id,
                         whatsapp_message_id=message_id,
@@ -200,13 +229,10 @@ def webhook():
                     )
                     db.session.add(new_message)
                     db.session.commit()
-                    #logging.info("New message: %s", new_message.contents)
 
-                    #messenger.send_message(new_message.contents, mobile)
+                    return True
 
-                    return "ok"
-
-    return "ok"
+    return True
 
 
 @app.route('/get_new_messages/', methods=['POST'])
