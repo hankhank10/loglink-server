@@ -200,9 +200,16 @@ def webhook():
                     if message_id == "token_reminder":
                         messenger.send_message("Your token will be sent in the next message", mobile)
                         messenger.send_message(user.token, mobile)
-                        messenger.send_message(
-                            "If you want to refresh your token, please send the word REFRESH to receive a new token",
-                            mobile)
+
+                    if message_id == "token_refresh":
+                        user.token = random_token()
+                        db.session.commit()
+                        messenger.send_message("Your refreshed token will be sent in the next message", mobile)
+                        messenger.send_message(user.token, mobile)
+
+                    if message_id == "more help":
+                        messenger.send_message("Please visit http://loglink.it/ for more assistance", mobile)
+
 
                 if message_type == "text":
                     message_contents = messenger.get_message(data)
@@ -214,7 +221,7 @@ def webhook():
                         "refresh"
                     ]
 
-                    if message_contents.lower() == "help":
+                    if message_contents.lower() in command_list:
                         messenger.send_reply_button(
                             recipient_id=mobile,
                             button={
@@ -224,7 +231,7 @@ def webhook():
                                     "text": "LogLink Help"
                                 },
                                 "body": {
-                                    "text": "How can I help you?"
+                                    "text": "Did you need some help? If not, no worries you can ignore this message."
                                 },
                                 "action": {
                                     "buttons": [
@@ -253,17 +260,6 @@ def webhook():
                                 }
                             },
                         )
-
-                    if message_contents.lower() == "token":
-                        messenger.send_message("Your token will be sent in the next message", mobile)
-                        messenger.send_message(user.token, mobile)
-                        messenger.send_message("If you want to refresh your token, please send the word REFRESH to receive a new token", mobile)
-
-                    if message_contents.lower() == "refresh":
-                        user.token = random_token()
-                        db.session.commit()
-                        messenger.send_message("Your refreshed token will be sent in the next message", mobile)
-                        messenger.send_message(user.token, mobile)
 
                     # If the message contains a command only, exit the function so it is not added to the database
                     if message_contents.lower() in command_list:
