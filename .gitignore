@@ -5,3 +5,4 @@ secretstuff.py
 .idea/*
 .venv/*
 secret_key
+/media_uploads/*
