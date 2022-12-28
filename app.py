@@ -356,12 +356,12 @@ def webhook():
                             location_details = f"Lat: {location_latitude}, Lon: {location_longitude}"
 
                     if location_url:
-                        location_details = f"{location_details} ({location_url})"
+                        location_details = f"{location_details} {location_url}"
 
                     google_maps_base_url = "https://maps.google.com/maps?q="
                     google_maps_address = f"{google_maps_base_url}{location_latitude},{location_longitude}"
 
-                    message_contents = f"{location_pin} {location_details} ({google_maps_address})"
+                    message_contents = f"{location_pin} {location_details} {google_maps_address}"
 
                     print (message_contents)
 
