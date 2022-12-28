@@ -56,7 +56,7 @@ class User(db.Model):
 class Message(db.Model):
     id:int = db.Column(db.Integer, primary_key=True)
 
-    received_from = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+    received_from:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
 
     whatsapp_message_id:str = db.Column(db.String(100))
 
@@ -88,7 +88,7 @@ def delete_delivered_messages(user_id):
     db.session.commit()
 
 
-def mark_message_read(message_id):
+def mark_whatsapp_message_read(message_id):
     r = requests.post(
         url = whatsapp_api_messages_uri,
         headers = {"Authorization": "Bearer " + secretstuff.whatsapp_token},
@@ -224,6 +224,7 @@ def webhook():
                     new_message = Message(
                         user_id=user.id,
                         whatsapp_message_id=message_id,
+                        received_from="whatsapp",
                         contents=message_contents,
                         timestamp=datetime.now(),
                     )
@@ -276,7 +277,8 @@ def get_new_messages():
 
             message_in_memory = message
             new_messages.append(message_in_memory)
-            mark_message_read(message.whatsapp_message_id)
+            if message.received_from == "whatsapp":
+                mark_whatsapp_message_read(message.whatsapp_message_id)
 
     db.session.commit()
 
