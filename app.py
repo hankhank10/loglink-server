@@ -207,6 +207,7 @@ def webhook():
                             button={
                                 "type": "button",
                                 "header": {
+                                    "type": "text",
                                     "text": "LogLink Help"
                                 },
                                 "body": {
