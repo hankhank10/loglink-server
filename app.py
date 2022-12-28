@@ -212,10 +212,9 @@ def webhook():
 @app.route('/get_new_messages/', methods=['POST'])
 def get_new_messages():
 
-    # Check that we have been sent JSON and that it is valid and matches a user
+    # Check that we have been sent JSON
     try:
         posted_json = request.get_json()
-        print(posted_json)
         user_id = posted_json['user_id']
     except:
         return jsonify({
@@ -224,7 +223,7 @@ def get_new_messages():
             'message': 'Failure parsing JSON or no JSON received',
         }), 400
 
-
+    # Check that the user exists
     if not user_id:
         return {
             'status': 'error',
