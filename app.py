@@ -43,11 +43,11 @@ whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_n
 class User(db.Model):
     id:int = db.Column(db.Integer, primary_key=True)
 
-    token = db.Column(db.String(80), unique=True, nullable=False)
-    phone_number = db.Column(db.String(20), unique=True, nullable=True)
+    token:str = db.Column(db.String(80), unique=True, nullable=False)
+    phone_number:str = db.Column(db.String(20), unique=True, nullable=True)
 
-    account_type = db.Column(db.String(20), nullable=False)  # eg WhatsApp
-    approved = db.Column(db.Boolean, nullable=False, default=True)
+    account_type:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+    approved:bool = db.Column(db.Boolean, nullable=False, default=True)
 
     api_call_count:int = db.Column(db.Integer, default=0)
 
@@ -301,6 +301,7 @@ def get_new_messages():
         'user': {
             'token': user.token,
             'api_call_count': user.api_call_count,
+            'approved': user.approved,
         },
         'messages': {
             'count': len(new_messages),
