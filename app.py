@@ -202,28 +202,31 @@ def webhook():
                     ]
 
                     if message_contents.lower() == "help":
-                        messenger.send_button(
+                        messenger.send_reply_button(
                             recipient_id=mobile,
                             button={
-                                "header": "Header Testing",
-                                "body": "Body Testing",
-                                "footer": "Footer Testing",
-                                "action": {
-                                    "button": "Button Testing",
-                                    "sections": [
-                                        {
-                                            "title": "iBank",
-                                            "rows": [
-                                                {"id": "row 1", "title": "Send Money", "description": ""},
-                                                {
-                                                    "id": "row 2",
-                                                    "title": "Withdraw money",
-                                                    "description": "",
-                                                },
-                                            ],
-                                        }
-                                    ],
+                                "type": "button",
+                                "body": {
+                                    "text": "This is a test button"
                                 },
+                                "action": {
+                                    "buttons": [
+                                        {
+                                            "type": "reply",
+                                            "reply": {
+                                                "id": "b1",
+                                                "title": "This is button 1"
+                                            }
+                                        },
+                                        {
+                                            "type": "reply",
+                                            "reply": {
+                                                "id": "b2",
+                                                "title": "this is button 2"
+                                            }
+                                        }
+                                    ]
+                                }
                             },
                         )
 
