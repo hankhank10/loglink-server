@@ -26,7 +26,10 @@ I use this to quickly add to my todo list (eg send a WhatsApp message saying `TO
 
 I am keen to find an intrepid group (5-10) of beta testers to help me test this out. I am even more keen to find anyone keen to collaborate with on this.
 
-If you are interested in either (after reading the important security disclaimer below) then please register interest here: https://5agez8udocf.typeform.com/to/Mlsi9lR7
+If you are interested in either (after reading the important security disclaimer below) then please register interest by either:
+- Completing this form https://5agez8udocf.typeform.com/to/Mlsi9lR7
+- Raising an issue on this repo offering assistnace
+- Diving right in by forking and raising a PR
 
 For potential collaborators, the tech stack is:
 - Python/Flask/SQLAlchemy on the backend (which I have covered, although anyone with encryption/security experience would be very welcome);
