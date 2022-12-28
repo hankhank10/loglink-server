@@ -282,14 +282,7 @@ def get_new_messages():
 
     db.session.commit()
 
-    #if new_messages:
-    #    if len(new_messages) == 1:
-    #        response = "1 new message downloaded by LogSeq"
-    #    else:
-    #        response = f"{len(new_messages)} new messages downloaded by LogSeq"
-    #    messenger.send_message(response, user.phone_number)
-
-    #delete_delivered_messages(user.id)
+    delete_delivered_messages(user.id)
 
     return jsonify({
         'status': 'success',
