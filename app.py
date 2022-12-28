@@ -364,6 +364,17 @@ def webhook():
                         whatsapp_message_id=message_id
                     )
 
+                if message_type == "image":
+                    image = messenger.get_image(data)
+                    image_id, mime_type = image["id"], image["mime_type"]
+                    image_url = messenger.query_media_url(image_id)
+
+                    # Download the image to a temporary file with a random name
+                    uploads_folder = "media_uploads"
+                    random_filename = f"{uploads_folder}/{secrets.token_hex(16)}"
+                    image_filename = messenger.download_media(image_url, mime_type, random_filename)
+                    print (image_filename)
+
                 if result:
                     logging.info("Message added to database")
                     return "ok"
