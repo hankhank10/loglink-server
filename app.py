@@ -311,13 +311,6 @@ def webhook():
                         whatsapp_message_id=message_id
                     )
 
-                    if result:
-                        logging.info("Message added to database")
-                        return "ok"
-                    else:
-                        logging.error("Failed to add message to database")
-                        return "Failed to add message to database"
-
                 if message_type == "location":
                     message_id = messenger.get_message_id(data)
                     message_location = messenger.get_location(data)
@@ -364,9 +357,14 @@ def webhook():
                         whatsapp_message_id=message_id
                     )
 
-                if message_type == "image":
+                if message_type == "image" or message_type == "video":
                     message_id = messenger.get_message_id(data)
-                    image = messenger.get_image(data)
+
+                    if message_type == "image":
+                        image = messenger.get_image(data)
+
+                    if message_type == "video":
+                        image = messenger.get_video(data)
 
                     image_id, mime_type = image["id"], image["mime_type"]
                     image_url = messenger.query_media_url(image_id)
@@ -398,6 +396,18 @@ def webhook():
                         )
                     else:
                         logging.error("Failed to upload image to imgur")
+
+                unsupported_message_types = [
+                    "audio",
+                    "file",
+                    "document",
+                    "contacts",
+                    "sticker",
+                    "unsupported"
+                ]
+                if message_type in unsupported_message_types:
+                    messenger.send_message(f"Sorry, LogLink does not yet support {message_type} uploads", mobile)
+                    result = True
 
                 if result:
                     logging.info("Message added to database")

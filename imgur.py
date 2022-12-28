@@ -6,7 +6,7 @@ imgur_client = Imgur({'client_id': imgur_client_id})
 
 
 def upload_image(image_path):
-	image = imgur_client.image_upload(image_path, 'Untitled', 'My first image upload')
+	image = imgur_client.image_upload(image_path, 'Untitled', 'An upload from LogLink')
 	image_id = image['response']['data']['id']
 
 	if image['response']['data']['link']:
