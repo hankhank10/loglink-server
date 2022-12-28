@@ -75,6 +75,9 @@ class Message(db.Model):
 # Define global paths and uris
 app_uri = "https://loglink.it/"
 
+# App settings
+delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
+
 
 #################
 # HOUSEKEEPING #
@@ -135,8 +138,11 @@ def create_new_user(
 
 @app.route('/')
 def index():
-    return "Hello world"
+    return "API is running"
 
+#####################
+# WHATSAPP          #
+#####################
 
 @app.route('/whatsapp/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -236,6 +242,10 @@ def webhook():
     return "ok"
 
 
+#####################
+# OUTPUT            #
+#####################
+
 @app.route('/get_new_messages/', methods=['POST'])
 def get_new_messages():
 
@@ -250,7 +260,7 @@ def get_new_messages():
             'message': 'Failure parsing JSON or no JSON received',
         }), 400
 
-    # Check that the user exists
+    # Check that the user_id was provided
     if not user_id:
         return {
             'status': 'error',
@@ -268,6 +278,7 @@ def get_new_messages():
             'message': 'No user found with that token. Try refreshing your token at ' + app_uri + ' and is ensure it is correctly entered in settings.'
         }, 404
 
+    # Get the messages
     messages = Message.query.filter_by(user_id=user.id).all()
 
     new_messages = []
@@ -280,9 +291,10 @@ def get_new_messages():
             if message.received_from == "whatsapp":
                 mark_whatsapp_message_read(message.whatsapp_message_id)
 
+    # Mark them as read and delete them from the database
     db.session.commit()
-
-    delete_delivered_messages(user.id)
+    if delete_immediately:
+        delete_delivered_messages(user.id)
 
     return jsonify({
         'status': 'success',
