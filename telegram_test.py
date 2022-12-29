@@ -1,4 +1,5 @@
 import requests
+import telegram
 
 import secretstuff
 
@@ -17,4 +18,3 @@ def hello_world():
 # Run the app
 if __name__ == "__main__":
 	app.run(host='0.0.0.0', port=5010, debug=True)
-	
