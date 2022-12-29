@@ -30,7 +30,7 @@ migrate = Migrate(app, db)
 
 # Set up Heyoo
 from heyoo import WhatsApp
-messenger = WhatsApp(
+whatsapp_messenger = WhatsApp(
     token=secretstuff.whatsapp_token,
     phone_number_id=secretstuff.whatsapp_phone_number_id
 )
@@ -199,15 +199,15 @@ def webhook():
     data = request.get_json()
     # logging.info("Received webhook data: %s", data)
 
-    changed_field = messenger.changed_field(data)
+    changed_field = whatsapp_messenger.changed_field(data)
     if changed_field == "messages":
-        new_message = messenger.get_mobile(data)
+        new_message = whatsapp_messenger.get_mobile(data)
         if new_message:
 
             # Get all the details of the sender
-            mobile = messenger.get_mobile(data)
-            name = messenger.get_name(data)
-            message_type = messenger.get_message_type(data)
+            mobile = whatsapp_messenger.get_mobile(data)
+            name = whatsapp_messenger.get_name(data)
+            message_type = whatsapp_messenger.get_message_type(data)
 
             logging.info(
                 f"New Message; sender:{mobile} name:{name} type:{message_type}"
@@ -225,14 +225,14 @@ def webhook():
                 if not user:
                     logging.error("Failed to create new user")
                     if whitelist_only:
-                        messenger.send_message("There was a problem creating your account. This may be because your mobile number is not on the whitelist.", mobile)
+                        whatsapp_messenger.send_message("There was a problem creating your account. This may be because your mobile number is not on the whitelist.", mobile)
                     else:
-                        messenger.send_message("There was a problem creating your account.", mobile)
+                        whatsapp_messenger.send_message("There was a problem creating your account.", mobile)
                     return "Failed to create new user"
 
                 logging.info("New user: %s", user.phone_number)
-                messenger.send_message("Welcome to LogLink, your token will be send in the next message", mobile)
-                messenger.send_message(user.token, mobile)
+                whatsapp_messenger.send_message("Welcome to LogLink, your token will be send in the next message", mobile)
+                whatsapp_messenger.send_message(user.token, mobile)
                 return "ok"
 
             if user:
@@ -241,28 +241,28 @@ def webhook():
                 result = False
 
                 if message_type == "interactive":
-                    message_response = messenger.get_interactive_response(data)
+                    message_response = whatsapp_messenger.get_interactive_response(data)
                     interactive_type = message_response.get("type")
                     message_id = message_response[interactive_type]["id"]
 
                     if message_id == "token_reminder":
-                        messenger.send_message("Your token will be sent in the next message (for easy copying).", mobile)
-                        messenger.send_message(user.token, mobile)
+                        whatsapp_messenger.send_message("Your token will be sent in the next message (for easy copying).", mobile)
+                        whatsapp_messenger.send_message(user.token, mobile)
 
                     if message_id == "new_token":
                         user.token = random_token()
                         db.session.commit()
-                        messenger.send_message("Resetting your token.", mobile)
-                        messenger.send_message("Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.", mobile)
-                        messenger.send_message(user.token, mobile)
+                        whatsapp_messenger.send_message("Resetting your token.", mobile)
+                        whatsapp_messenger.send_message("Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.", mobile)
+                        whatsapp_messenger.send_message(user.token, mobile)
 
                     if message_id == "more_help":
-                        messenger.send_message("Please visit https://loglink.it/ for more assistance", mobile)
+                        whatsapp_messenger.send_message("Please visit https://loglink.it/ for more assistance", mobile)
 
                     result = True
 
                 if message_type == "text":
-                    message_contents = messenger.get_message(data)
+                    message_contents = whatsapp_messenger.get_message(data)
 
                     # Check whether the message contains a command
                     command_list = [
@@ -274,7 +274,7 @@ def webhook():
 
                     # Deal with help commands
                     if message_contents.lower() in command_list:
-                        messenger.send_reply_button(
+                        whatsapp_messenger.send_reply_button(
                             recipient_id=mobile,
                             button={
                                 "type": "button",
@@ -318,7 +318,7 @@ def webhook():
                         return "ok"
 
                     # Add the message to the database
-                    message_id = messenger.get_message_id(data)
+                    message_id = whatsapp_messenger.get_message_id(data)
                     result = add_new_message(
                         user_id=user.id,
                         received_from="whatsapp",
@@ -327,8 +327,8 @@ def webhook():
                     )
 
                 if message_type == "location":
-                    message_id = messenger.get_message_id(data)
-                    message_location = messenger.get_location(data)
+                    message_id = whatsapp_messenger.get_message_id(data)
+                    message_location = whatsapp_messenger.get_location(data)
 
                     # Get all the location data
                     location_latitude = message_location["latitude"] # always included
@@ -371,16 +371,16 @@ def webhook():
                     )
 
                 if message_type == "image" or message_type == "video":
-                    message_id = messenger.get_message_id(data)
+                    message_id = whatsapp_messenger.get_message_id(data)
 
                     if message_type == "image":
-                        image = messenger.get_image(data)
+                        image = whatsapp_messenger.get_image(data)
 
                     if message_type == "video":
-                        image = messenger.get_video(data)
+                        image = whatsapp_messenger.get_video(data)
 
                     image_id, mime_type = image["id"], image["mime_type"]
-                    image_url = messenger.query_media_url(image_id)
+                    image_url = whatsapp_messenger.query_media_url(image_id)
 
                     # Get the caption if there is one
                     caption = image.get("caption")
@@ -389,7 +389,7 @@ def webhook():
                     uploads_folder = "media_uploads"
                     random_filename = secrets.token_hex(16)
                     random_path = f"{uploads_folder}/{random_filename}"
-                    image_filename = messenger.download_media(image_url, mime_type, random_path)
+                    image_filename = whatsapp_messenger.download_media(image_url, mime_type, random_path)
 
                     # Upload the image to imgur
                     imgur_result = imgur.upload_image(image_filename)
@@ -419,7 +419,7 @@ def webhook():
                     "unsupported"
                 ]
                 if message_type in unsupported_message_types:
-                    messenger.send_message(f"Sorry, LogLink does not yet support {message_type} uploads", mobile)
+                    whatsapp_messenger.send_message(f"Sorry, LogLink does not yet support {message_type} uploads", mobile)
                     result = True
 
                 if result:
