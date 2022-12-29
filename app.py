@@ -63,7 +63,7 @@ class Message(db.Model):
 
     received_from:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
 
-    whatsapp_message_id:str = db.Column(db.String(100))
+    provider_message_id:str = db.Column(db.String(100))
 
     user_id = db.Column(db.String(80), db.ForeignKey('user.id'))
 
@@ -160,7 +160,7 @@ def add_new_message(
     # Create the message
     new_message = Message(
         user_id=user_id,
-        whatsapp_message_id=whatsapp_message_id,
+        provider_message_id=whatsapp_message_id,
         received_from=received_from,
         contents=message_contents,
         timestamp=datetime.now(),
@@ -479,7 +479,7 @@ def get_new_messages():
             message_in_memory = message
             new_messages.append(message_in_memory)
             if message.received_from == "whatsapp":
-                mark_whatsapp_message_read(message.whatsapp_message_id)
+                mark_whatsapp_message_read(message.provider_message_id)
 
     # Mark them as read and delete them from the database
     db.session.commit()
