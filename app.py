@@ -21,7 +21,7 @@ import whitelist
 app = Flask(__name__)
 
 # Create the DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///whatsapp.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///messages.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["JSON_SORT_KEYS"] = False
 app.config['SECRET_KEY'] = secretstuff.app_secret_key
