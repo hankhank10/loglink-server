@@ -6,8 +6,6 @@ import logging
 from dataclasses import dataclass
 import imgur
 
-from cryptography.fernet import Fernet
-
 # Import flask
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
@@ -28,14 +26,14 @@ app.config['SECRET_KEY'] = secretstuff.app_secret_key
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-# Set up Heyoo
+# Set up Heyoo for WhatsApp API
 from heyoo import WhatsApp
 whatsapp_messenger = WhatsApp(
     token=secretstuff.whatsapp_token,
     phone_number_id=secretstuff.whatsapp_phone_number_id
 )
 
-# Whatsapp APIs addresses for calls outside Heyoo
+# Whatsapp APIs addresses for calls outside Heyoo (at the moment only setting read receipts)
 whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
 whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
 
@@ -240,15 +238,78 @@ def compose_image_message_contents(
     return message_contents
 
 
-
 #####################
 # ROUTES            #
 #####################
 
-
 @app.route('/')
 def index():
     return "API is running"
+
+
+@app.route('/get_new_messages/', methods=['POST'])
+def get_new_messages():
+
+    # Check that we have been sent JSON
+    try:
+        posted_json = request.get_json()
+        user_id = posted_json['user_id']
+    except:
+        return jsonify({
+            'status': 'error',
+            'error_type': 'failure_parsing_json',
+            'message': 'Failure parsing JSON or no JSON received',
+        }), 400
+
+    # Check that the user_id was provided
+    if not user_id:
+        return {
+            'status': 'error',
+            'error_type': 'no_user_id',
+            'message': 'No user_id provided in JSON'
+        }, 400
+
+    # Get the user record
+    user = User.query.filter_by(token=user_id).first()
+
+    if not user:
+        return {
+            'status': 'error',
+            'error_type': 'user_not_found',
+            'message': 'No user found with that token. Try refreshing your token at ' + app_uri + ' and is ensure it is correctly entered in settings.'
+        }, 404
+
+    # Get the messages
+    messages = Message.query.filter_by(user_id=user.id).all()
+
+    new_messages = []
+    for message in messages:
+        if not message.delivered:
+            message.delivered = True
+
+            message_in_memory = message
+            new_messages.append(message_in_memory)
+            if message.received_from == "whatsapp":
+                mark_whatsapp_message_read(message.provider_message_id)
+
+    # Mark them as read and delete them from the database
+    db.session.commit()
+    if delete_immediately:
+        delete_delivered_messages(user.id)
+
+    return jsonify({
+        'status': 'success',
+        'user': {
+            'token': user.token,
+            'api_call_count': user.api_call_count,
+            'approved': user.approved,
+        },
+        'messages': {
+            'count': len(new_messages),
+            'contents': new_messages
+        }
+    }), 200
+
 
 
 #####################
@@ -258,7 +319,7 @@ def index():
 @app.route('/whatsapp/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == "GET":
-        if request.args.get("hub.verify_token") == secretstuff.verify_token:
+        if request.args.get("hub.verify_token") == secretstuff.whatsapp_verify_token:
             logging.info("Verified webhook")
             response = make_response(request.args.get("hub.challenge"), 200)
             response.mimetype = "text/plain"
@@ -484,71 +545,9 @@ def webhook():
 
 
 #####################
-# OUTPUT            #
+# TELEGRAM          #
 #####################
 
-@app.route('/get_new_messages/', methods=['POST'])
-def get_new_messages():
-
-    # Check that we have been sent JSON
-    try:
-        posted_json = request.get_json()
-        user_id = posted_json['user_id']
-    except:
-        return jsonify({
-            'status': 'error',
-            'error_type': 'failure_parsing_json',
-            'message': 'Failure parsing JSON or no JSON received',
-        }), 400
-
-    # Check that the user_id was provided
-    if not user_id:
-        return {
-            'status': 'error',
-            'error_type': 'no_user_id',
-            'message': 'No user_id provided in JSON'
-        }, 400
-
-    # Get the user record
-    user = User.query.filter_by(token=user_id).first()
-
-    if not user:
-        return {
-            'status': 'error',
-            'error_type': 'user_not_found',
-            'message': 'No user found with that token. Try refreshing your token at ' + app_uri + ' and is ensure it is correctly entered in settings.'
-        }, 404
-
-    # Get the messages
-    messages = Message.query.filter_by(user_id=user.id).all()
-
-    new_messages = []
-    for message in messages:
-        if not message.delivered:
-            message.delivered = True
-
-            message_in_memory = message
-            new_messages.append(message_in_memory)
-            if message.received_from == "whatsapp":
-                mark_whatsapp_message_read(message.provider_message_id)
-
-    # Mark them as read and delete them from the database
-    db.session.commit()
-    if delete_immediately:
-        delete_delivered_messages(user.id)
-
-    return jsonify({
-        'status': 'success',
-        'user': {
-            'token': user.token,
-            'api_call_count': user.api_call_count,
-            'approved': user.approved,
-        },
-        'messages': {
-            'count': len(new_messages),
-            'contents': new_messages
-        }
-    }), 200
 
 
 # Run the app
