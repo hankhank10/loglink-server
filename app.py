@@ -39,8 +39,23 @@ whatsapp_messenger = WhatsApp(
 whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
 whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
 
+# Define global paths and uris
+app_uri = "https://loglink.it/"
+
 # Global app settings
 whitelist_only = True
+delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
+
+# Message strings
+message_string = {
+    "problem_creating_user_generic": "There was a problem creating your account.",
+    "problem_creating_user_whitelist": "There was a problem creating your account. This may be because your mobile number is not on the whitelist.",
+    "welcome_to_loglink": "Welcome to LogLink, your token will be send in the next message (for easy copying)",
+    "token_will_be_sent_in_next_message": "Your token will be sent in the next message (for easy copying)",
+    "resetting_your_token": "Resetting your token.",
+    "token_reset": "Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.",
+    "more_help": f"Please visit {app_uri} for more assistance"
+}
 
 
 # Define the model in which the user data, tokens and messages are stored
@@ -77,11 +92,6 @@ class Message(db.Model):
 
 
 
-# Define global paths and uris
-app_uri = "https://loglink.it/"
-
-# App settings
-delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
 
 
 #################
@@ -171,6 +181,66 @@ def add_new_message(
     return True
 
 
+def compose_location_message_contents(
+        location_latitude,
+        location_longitude,
+        location_name=None,
+        location_address=None,
+        location_url=None,
+):
+
+    message_contents = None
+
+    location_pin = "📍"
+    location_details = ""
+
+    if location_name:
+        location_details = location_name
+
+    if location_address:
+        if location_details:
+            location_details = f"{location_details}, "
+        location_details = f"{location_details}{location_address}"
+    else:
+        if location_details:
+            location_details = f"{location_details} {location_latitude}, {location_longitude})"
+        else:
+            location_details = f"Lat: {location_latitude}, Lon: {location_longitude}"
+
+    if location_url:
+        location_details = f"{location_details} {location_url}"
+
+    google_maps_base_url = "https://maps.google.com/maps?q="
+    google_maps_address = f"{google_maps_base_url}{location_latitude},{location_longitude}"
+
+    message_contents = f"{location_pin} {location_details} {google_maps_address}"
+
+    return message_contents
+
+
+def compose_image_message_contents(
+        image_filename,
+        caption=None
+):
+
+    # Upload the image to imgur
+    imgur_result = imgur.upload_image(image_filename)
+
+    if not imgur_result:
+        return False
+
+    if imgur_result:
+        logging.info(f"Image uploaded to imgur at url {imgur_result}")
+
+        if caption:
+            message_contents = f"{caption} ![{caption}]({imgur_result})"
+        else:
+            message_contents = imgur_result
+
+    return message_contents
+
+
+
 #####################
 # ROUTES            #
 #####################
@@ -225,13 +295,13 @@ def webhook():
                 if not user:
                     logging.error("Failed to create new user")
                     if whitelist_only:
-                        whatsapp_messenger.send_message("There was a problem creating your account. This may be because your mobile number is not on the whitelist.", mobile)
+                        whatsapp_messenger.send_message(message_string["problem_creating_user"], mobile)
                     else:
-                        whatsapp_messenger.send_message("There was a problem creating your account.", mobile)
+                        whatsapp_messenger.send_message(message_string["problem_creating_user_generic"], mobile)
                     return "Failed to create new user"
 
                 logging.info("New user: %s", user.phone_number)
-                whatsapp_messenger.send_message("Welcome to LogLink, your token will be send in the next message", mobile)
+                whatsapp_messenger.send_message(message_string["welcome_to_loglink"], mobile)
                 whatsapp_messenger.send_message(user.token, mobile)
                 return "ok"
 
@@ -246,18 +316,18 @@ def webhook():
                     message_id = message_response[interactive_type]["id"]
 
                     if message_id == "token_reminder":
-                        whatsapp_messenger.send_message("Your token will be sent in the next message (for easy copying).", mobile)
+                        whatsapp_messenger.send_message(message_string["token_will_be_sent_in_next_message"], mobile)
                         whatsapp_messenger.send_message(user.token, mobile)
 
                     if message_id == "new_token":
                         user.token = random_token()
                         db.session.commit()
-                        whatsapp_messenger.send_message("Resetting your token.", mobile)
-                        whatsapp_messenger.send_message("Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.", mobile)
+                        whatsapp_messenger.send_message(message_string["resetting_your_token"], mobile)
+                        whatsapp_messenger.send_message(message_string["token_reset"], mobile)
                         whatsapp_messenger.send_message(user.token, mobile)
 
                     if message_id == "more_help":
-                        whatsapp_messenger.send_message("Please visit https://loglink.it/ for more assistance", mobile)
+                        whatsapp_messenger.send_message(message_string["more_help"], mobile)
 
                     result = True
 
@@ -330,7 +400,7 @@ def webhook():
                     message_id = whatsapp_messenger.get_message_id(data)
                     message_location = whatsapp_messenger.get_location(data)
 
-                    # Get all the location data
+                    # Get the essential location data
                     location_latitude = message_location["latitude"] # always included
                     location_longitude = message_location["longitude"] # always included
 
@@ -339,36 +409,21 @@ def webhook():
                     location_address = message_location.get("address")
                     location_url = message_location.get("url")
 
-                    location_pin = "📍"
-                    location_details = ""
-
-                    if location_name:
-                        location_details = location_name
-
-                    if location_address:
-                        if location_details:
-                            location_details = f"{location_details}, "
-                        location_details = f"{location_details}{location_address}"
-                    else:
-                        if location_details:
-                            location_details = f"{location_details} {location_latitude}, {location_longitude})"
-                        else:
-                            location_details = f"Lat: {location_latitude}, Lon: {location_longitude}"
-
-                    if location_url:
-                        location_details = f"{location_details} {location_url}"
-
-                    google_maps_base_url = "https://maps.google.com/maps?q="
-                    google_maps_address = f"{google_maps_base_url}{location_latitude},{location_longitude}"
-
-                    message_contents = f"{location_pin} {location_details} {google_maps_address}"
-
-                    result = add_new_message(
-                        user_id=user.id,
-                        received_from="whatsapp",
-                        message_contents=message_contents,
-                        whatsapp_message_id=message_id
+                    message_contents = compose_location_message_contents(
+                        location_latitude=location_latitude,
+                        location_longitude=location_longitude,
+                        location_name=location_name,
+                        location_address=location_address,
+                        location_url=location_url
                     )
+
+                    if message_contents:
+                        result = add_new_message(
+                            user_id=user.id,
+                            received_from="whatsapp",
+                            message_contents=message_contents,
+                            whatsapp_message_id=message_id
+                        )
 
                 if message_type == "image" or message_type == "video":
                     message_id = whatsapp_messenger.get_message_id(data)
@@ -391,16 +446,12 @@ def webhook():
                     random_path = f"{uploads_folder}/{random_filename}"
                     image_filename = whatsapp_messenger.download_media(image_url, mime_type, random_path)
 
-                    # Upload the image to imgur
-                    imgur_result = imgur.upload_image(image_filename)
-                    if imgur_result:
-                        logging.info(f"Image uploaded to imgur at url {imgur_result}")
+                    message_contents = compose_image_message_contents(
+                        image_filename=image_filename,
+                        caption = caption
+                    )
 
-                        if caption:
-                            message_contents = f"{caption} ![{caption}]({imgur_result})"
-                        else:
-                            message_contents = imgur_result
-
+                    if message_contents:
                         result = add_new_message(
                             user_id=user.id,
                             received_from="whatsapp",
