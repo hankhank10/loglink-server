@@ -17,6 +17,8 @@ import secretstuff
 
 telegram_api_url = f"https://api.telegram.org/{secretstuff.telegram_full_token}"
 
+provider = 'telegram'
+
 
 def send_telegram_message(
 	telegram_chat_id,
