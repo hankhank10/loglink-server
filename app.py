@@ -26,17 +26,6 @@ app.config['SECRET_KEY'] = secretstuff.app_secret_key
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-# Set up Heyoo for WhatsApp API
-from heyoo import WhatsApp
-whatsapp_messenger = WhatsApp(
-    token=secretstuff.whatsapp_token,
-    phone_number_id=secretstuff.whatsapp_phone_number_id
-)
-
-# Whatsapp APIs addresses for calls outside Heyoo (at the moment only setting read receipts)
-whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
-whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
-
 # Define global paths and uris
 app_uri = "https://loglink.it/"
 
@@ -63,6 +52,7 @@ class User(db.Model):
 
     token:str = db.Column(db.String(80), unique=True, nullable=False)
     phone_number:str = db.Column(db.String(20), unique=True, nullable=True)
+    chat_id:str = db.Column(db.String(30), unique=False, nullable=True)
 
     account_type:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
     approved:bool = db.Column(db.Boolean, nullable=False, default=True)
@@ -100,19 +90,6 @@ def delete_delivered_messages(user_id):
     db.session.commit()
 
 
-def mark_whatsapp_message_read(message_id):
-    r = requests.post(
-        url = whatsapp_api_messages_uri,
-        headers = {"Authorization": "Bearer " + secretstuff.whatsapp_token},
-        json = {
-            "messaging_product": "whatsapp",
-            "message_id": message_id,
-            "status": "read"
-        }
-    )
-    return r
-
-
 def random_token(token_type="whatsapp"):
     length = 4
     if token_type == "whatsapp":
@@ -123,7 +100,8 @@ def random_token(token_type="whatsapp"):
 def create_new_user(
     account_type="whatsapp",
     approved=True,
-    phone_number=None
+    phone_number=None,
+    chat_id=None,
 ):
     # If whitelist only, check if the phone number is in the whitelist
     if whitelist_only:
@@ -134,8 +112,9 @@ def create_new_user(
         new_user = User(
             phone_number=phone_number,
             token=random_token(),
-            account_type="whatsapp",
-            approved=approved
+            account_type=account_type,
+            approved=approved,
+            chat_id=chat_id,
         )
         db.session.add(new_user)
         db.session.commit()
@@ -148,7 +127,7 @@ def add_new_message(
     user_id,
     received_from,
     message_contents,
-    whatsapp_message_id=None,
+    provider_message_id=None,
 ):
 
     # Get the user
@@ -164,7 +143,7 @@ def add_new_message(
     # Create the message
     new_message = Message(
         user_id=user_id,
-        provider_message_id=whatsapp_message_id,
+        provider_message_id=provider_message_id,
         received_from=received_from,
         contents=message_contents,
         timestamp=datetime.now(),
@@ -236,6 +215,7 @@ def compose_image_message_contents(
 
 # Import other routes
 import whatsapp
+import telegram
 
 #####################
 # ROUTES            #
@@ -289,7 +269,7 @@ def get_new_messages():
             message_in_memory = message
             new_messages.append(message_in_memory)
             if message.received_from == "whatsapp":
-                mark_whatsapp_message_read(message.provider_message_id)
+                whatsapp.mark_whatsapp_message_read(message.provider_message_id)
 
     # Mark them as read and delete them from the database
     db.session.commit()

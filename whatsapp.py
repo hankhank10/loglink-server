@@ -1,23 +1,46 @@
 import logging
 import secrets
+import requests
+import secretstuff
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 
 from __main__ import app
-from __main__ import whatsapp_messenger, random_token
+from __main__ import random_token
 from __main__ import create_new_user, add_new_message, compose_location_message_contents, compose_image_message_contents
 
 from __main__ import db
-from __main__ import User, Message
+from __main__ import User
 
-from __main__ import whitelist_only, delete_immediately, app_uri, message_string
-from __main__ import whatsapp_api_messages_uri
+from __main__ import whitelist_only, message_string
 
-import secretstuff
+# Set up Heyoo for WhatsApp API
+from heyoo import WhatsApp
+whatsapp_messenger = WhatsApp(
+    token=secretstuff.whatsapp_token,
+    phone_number_id=secretstuff.whatsapp_phone_number_id
+)
+
 
 
 #####################
 # WHATSAPP          #
 #####################
+
+# Whatsapp APIs addresses for calls outside Heyoo (at the moment only setting read receipts)
+whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
+whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
+
+def mark_whatsapp_message_read(message_id):
+    r = requests.post(
+        url = whatsapp_api_messages_uri,
+        headers = {"Authorization": "Bearer " + secretstuff.whatsapp_token},
+        json = {
+            "messaging_product": "whatsapp",
+            "message_id": message_id,
+            "status": "read"
+        }
+    )
+    return r
 
 @app.route('/whatsapp/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -157,7 +180,7 @@ def webhook():
                         user_id=user.id,
                         received_from="whatsapp",
                         message_contents=message_contents,
-                        whatsapp_message_id=message_id
+                        provider_message_id=message_id
                     )
 
                 if message_type == "location":
@@ -186,7 +209,7 @@ def webhook():
                             user_id=user.id,
                             received_from="whatsapp",
                             message_contents=message_contents,
-                            whatsapp_message_id=message_id
+                            provider_message_id=message_id
                         )
 
                 if message_type == "image" or message_type == "video":
@@ -220,7 +243,7 @@ def webhook():
                             user_id=user.id,
                             received_from="whatsapp",
                             message_contents=message_contents,
-                            whatsapp_message_id=message_id
+                            provider_message_id=message_id
                         )
                     else:
                         logging.error("Failed to upload image to imgur")
