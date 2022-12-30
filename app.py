@@ -213,6 +213,24 @@ def compose_image_message_contents(
     return message_contents
 
 
+def send_message(
+    provider,
+    provider_id,
+    contents
+):
+
+    if provider == 'whatsapp':
+        whatsapp.whatsapp_messenger.send_message(contents, provider_id)
+        return True
+
+    if provider == 'telegram':
+        telegram.send_telegram_message(provider_id, contents)
+        return True
+
+    return False
+
+
+
 # Import other routes
 import whatsapp
 import telegram

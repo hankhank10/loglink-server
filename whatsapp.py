@@ -13,12 +13,16 @@ from __main__ import User
 
 from __main__ import whitelist_only, message_string
 
+from __main__ import send_message
+
 # Set up Heyoo for WhatsApp API
 from heyoo import WhatsApp
 whatsapp_messenger = WhatsApp(
     token=secretstuff.whatsapp_token,
     phone_number_id=secretstuff.whatsapp_phone_number_id
 )
+
+provider = 'whatsapp'
 
 
 
@@ -29,6 +33,7 @@ whatsapp_messenger = WhatsApp(
 # Whatsapp APIs addresses for calls outside Heyoo (at the moment only setting read receipts)
 whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
 whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
+
 
 def mark_whatsapp_message_read(message_id):
     r = requests.post(
@@ -41,6 +46,7 @@ def mark_whatsapp_message_read(message_id):
         }
     )
     return r
+
 
 @app.route('/whatsapp/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -61,6 +67,7 @@ def webhook():
         new_message = whatsapp_messenger.get_mobile(data)
         if new_message:
 
+
             # Get all the details of the sender
             mobile = whatsapp_messenger.get_mobile(data)
             name = whatsapp_messenger.get_name(data)
@@ -76,20 +83,20 @@ def webhook():
             # If it is a new user, create the account and return the token
             if not user:
                 user = create_new_user(
-                    account_type="whatsapp",
+                    account_type=provider,
                     phone_number=mobile
                 )
                 if not user:
                     logging.error("Failed to create new user")
                     if whitelist_only:
-                        whatsapp_messenger.send_message(message_string["problem_creating_user"], mobile)
+                        send_message(provider, mobile, message_string["problem_creating_user"])
                     else:
-                        whatsapp_messenger.send_message(message_string["problem_creating_user_generic"], mobile)
+                        send_message(provider, mobile, message_string["problem_creating_user_generic"])
                     return "Failed to create new user"
 
                 logging.info("New user: %s", user.phone_number)
-                whatsapp_messenger.send_message(message_string["welcome_to_loglink"], mobile)
-                whatsapp_messenger.send_message(user.token, mobile)
+                send_message(provider, mobile, message_string["welcome_to_loglink"])
+                send_message(provider, mobile, user.token)
                 return "ok"
 
             if user:
@@ -103,18 +110,18 @@ def webhook():
                     message_id = message_response[interactive_type]["id"]
 
                     if message_id == "token_reminder":
-                        whatsapp_messenger.send_message(message_string["token_will_be_sent_in_next_message"], mobile)
-                        whatsapp_messenger.send_message(user.token, mobile)
+                        send_message(provider, mobile, message_string["token_will_be_sent_in_next_message"])
+                        send_message(provider, mobile, user.token)
 
                     if message_id == "new_token":
                         user.token = random_token()
                         db.session.commit()
-                        whatsapp_messenger.send_message(message_string["resetting_your_token"], mobile)
-                        whatsapp_messenger.send_message(message_string["token_reset"], mobile)
-                        whatsapp_messenger.send_message(user.token, mobile)
+                        send_message(provider, mobile, message_string["resetting_your_token"])
+                        send_message(provider, mobile, message_string["token_reset"])
+                        send_message(provider, mobile, user.token)
 
                     if message_id == "more_help":
-                        whatsapp_messenger.send_message(message_string["more_help"], mobile)
+                        send_message(provider, mobile, message_string["more_help"])
 
                     result = True
 
@@ -178,7 +185,7 @@ def webhook():
                     message_id = whatsapp_messenger.get_message_id(data)
                     result = add_new_message(
                         user_id=user.id,
-                        received_from="whatsapp",
+                        received_from=provider,
                         message_contents=message_contents,
                         provider_message_id=message_id
                     )
@@ -207,7 +214,7 @@ def webhook():
                     if message_contents:
                         result = add_new_message(
                             user_id=user.id,
-                            received_from="whatsapp",
+                            received_from=provider,
                             message_contents=message_contents,
                             provider_message_id=message_id
                         )
@@ -241,7 +248,7 @@ def webhook():
                     if message_contents:
                         result = add_new_message(
                             user_id=user.id,
-                            received_from="whatsapp",
+                            received_from=provider,
                             message_contents=message_contents,
                             provider_message_id=message_id
                         )
@@ -257,7 +264,7 @@ def webhook():
                     "unsupported"
                 ]
                 if message_type in unsupported_message_types:
-                    whatsapp_messenger.send_message(f"Sorry, LogLink does not yet support {message_type} uploads", mobile)
+                    send_message(provider, mobile, f"Sorry, LogLink does not yet support {message_type} uploads")
                     result = True
 
                 if result:
