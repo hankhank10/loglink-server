@@ -89,13 +89,9 @@ class Message(db.Model):
         return (datetime.now() - self.timestamp).seconds / 60
 
 
-
-
-
 #################
 # HOUSEKEEPING #
 #################
-
 
 def delete_delivered_messages(user_id):
     messages = Message.query.filter_by(user_id=user_id, delivered=True)
