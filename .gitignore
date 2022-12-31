@@ -6,3 +6,4 @@ secretstuff.py
 .venv/*
 secret_key
 whitelist.py
+.DS_Store
