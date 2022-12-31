@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 
 from __main__ import app
 from __main__ import random_token
-from __main__ import create_new_user, add_new_message, compose_location_message_contents, compose_image_message_contents
+from __main__ import add_new_message, compose_location_message_contents, compose_image_message_contents
 
 from __main__ import db
 from __main__ import User
@@ -16,12 +16,26 @@ from __main__ import whitelist_only, message_string, media_uploads_folder
 from __main__ import send_message
 from __main__ import onboarding_workflow
 
+from __main__ import help_send_token_reminder, help_send_new_token, help_more_help
+
+
 import secretstuff
 
 telegram_base_api_url = 'https://api.telegram.org'
 telegram_api_url = f"{telegram_base_api_url}/{secretstuff.telegram_full_token}"
 
 provider = 'telegram'
+
+command_list = [
+	'/start',
+    "/help",
+    "/token",
+	"/token_reminder",
+    "/refresh",
+	"/token_refresh",
+	"/more_help",
+    "/readme"
+]
 
 
 def download_file_from_telegram(
@@ -110,19 +124,45 @@ def telegram_webhook():
 			# Work out the message type and get the relevant information
 			result = False
 
-			pprint.pprint(data['message'])
+			#pprint.pprint(data['message'])
 
 			if 'text' in data['message']:
 				message_received['message_type'] = 'text'
 				message_received['message_contents'] = data['message']['text']
 
-				# Add the message to the database
-				result = add_new_message(
-					user_id=user.id,
-					provider=provider,
-					message_contents=message_received['message_contents'],
-					provider_message_id=message_received['telegram_message_id'],
-				)
+				# Check if this is a command
+				if message_received['message_contents'] in command_list:
+					if message_received['message_contents'] == '/start':
+						result = onboarding_result = onboarding_workflow(
+							provider=provider,
+							provider_id=message_received['telegram_chat_id'],
+						)
+
+					if message_received['message_contents'] == '/help':
+						result = send_message(
+							provider,
+							message_received['telegram_chat_id'],
+							"You want help??"
+						)
+
+					if message_received['message_contents'] == '/token' or message_received['message_contents'] == '/token_reminder':
+						help_send_token_reminder(user.id, provider, message_received['telegram_chat_id'])
+
+					if message_received['message_contents'] == '/refresh' or message_received['message_contents'] == '/token_refresh':
+						help_send_new_token(user.id, provider, message_received['telegram_chat_id'])
+
+					if message_received['message_contents'] == "/more_help":
+						help_more_help(user.id, provider, message_received['telegram_chat_id'])
+
+
+				else:
+					# Add the message to the database
+					result = add_new_message(
+						user_id=user.id,
+						provider=provider,
+						message_contents=message_received['message_contents'],
+						provider_message_id=message_received['telegram_message_id'],
+					)
 
 			elif 'photo' in data['message'] or 'video' in data['message']:
 

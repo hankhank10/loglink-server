@@ -33,6 +33,7 @@ media_uploads_folder = "media_uploads"
 # Global app settings
 whitelist_only = True
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
+token_length = 12
 
 # Message strings
 message_string = {
@@ -50,13 +51,6 @@ message_string = {
 valid_providers = [
     "whatsapp",
     "telegram",
-]
-
-command_list = [
-    "help",
-    "token",
-    "refresh",
-    "readme"
 ]
 
 
@@ -104,13 +98,12 @@ def delete_delivered_messages(user_id):
     db.session.commit()
 
 
-def random_token(token_type="whatsapp"):
-    length = 4
+def random_token(token_type=None):
     if token_type == "whatsapp":
-        return "whatsapp"+secrets.token_hex(length)
+        return "whatsapp"+secrets.token_hex(token_length)
     if token_type == "telegram":
-        return "telegram"+secrets.token_hex(length)
-    return "unknown"+secrets.token_hex(length)
+        return "telegram"+secrets.token_hex(token_length)
+    return "unknown"+secrets.token_hex(token_length)
 
 
 def create_new_user(
@@ -124,7 +117,7 @@ def create_new_user(
 
     # If whitelist only, check if the phone number is in the whitelist
     if whitelist_only:
-        if provider=="whatsapp":
+        if provider == "whatsapp":
             if provider_id not in whitelist.acceptable_numbers:
                 return False
 
@@ -257,11 +250,19 @@ def onboarding_workflow(
     if provider not in valid_providers:
         return False
 
-    # Create a new user
-    user = create_new_user(
+    # Check if this provider ID is already in the database
+    user = User.query.filter_by(
         provider=provider,
         provider_id=provider_id
-    )
+    ).first()
+
+    if not user:
+        # Create a new user
+        user = create_new_user(
+            provider=provider,
+            provider_id=provider_id
+        )
+
     if not user:
         logging.error("Failed to create new user")
         if whitelist_only:
@@ -273,6 +274,46 @@ def onboarding_workflow(
     logging.info("New user: %s", user.provider_id)
     send_message(provider, provider_id, message_string["welcome_to_loglink"])
     send_message(provider, provider_id, user.token)
+    return True
+
+
+def help_send_token_reminder(
+    user_id,
+    provider,
+    provider_id
+):
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        logging.error("User not found")
+        return False
+    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"])
+    send_message(provider, provider_id, user.token)
+    return True
+
+
+def help_send_new_token(
+    user_id,
+    provider,
+    provider_id
+):
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        logging.error("User not found")
+        return False
+    user.token = random_token(provider)
+    db.session.commit()
+    send_message(provider, provider_id, message_string["resetting_your_token"])
+    send_message(provider, provider_id, message_string["token_reset"])
+    send_message(provider, provider_id, user.token)
+    return True
+
+
+def help_more_help(
+    user_id,
+    provider,
+    provider_id
+):
+    send_message(provider, provider_id, message_string["more_help"])
     return True
 
 

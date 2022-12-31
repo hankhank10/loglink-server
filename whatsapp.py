@@ -11,10 +11,12 @@ from __main__ import create_new_user, add_new_message, compose_location_message_
 from __main__ import db
 from __main__ import User
 
-from __main__ import whitelist_only, message_string, command_list
+from __main__ import whitelist_only, message_string
 
 from __main__ import send_message
 from __main__ import onboarding_workflow
+
+from __main__ import help_send_token_reminder, help_send_new_token, help_more_help
 
 # Set up Heyoo for WhatsApp API
 from heyoo import WhatsApp
@@ -24,6 +26,17 @@ whatsapp_messenger = WhatsApp(
 )
 
 provider = 'whatsapp'
+
+command_list = [
+    "help",
+    "token",
+    "refresh",
+    "readme",
+    "/help",
+    "/token",
+    "/refresh",
+    "/readme"
+]
 
 
 
@@ -106,18 +119,13 @@ def webhook():
                     message_id = message_response[interactive_type]["id"]
 
                     if message_id == "token_reminder":
-                        send_message(provider, mobile, message_string["token_will_be_sent_in_next_message"])
-                        send_message(provider, mobile, user.token)
+                        help_send_token_reminder(user.id, provider, mobile)
 
                     if message_id == "new_token":
-                        user.token = random_token()
-                        db.session.commit()
-                        send_message(provider, mobile, message_string["resetting_your_token"])
-                        send_message(provider, mobile, message_string["token_reset"])
-                        send_message(provider, mobile, user.token)
+                        help_send_new_token(user.id, provider, mobile)
 
                     if message_id == "more_help":
-                        send_message(provider, mobile, message_string["more_help"])
+                        help_more_help(user.id, provider, mobile)
 
                     result = True
 
