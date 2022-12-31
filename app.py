@@ -52,6 +52,13 @@ valid_providers = [
     "telegram",
 ]
 
+command_list = [
+    "help",
+    "token",
+    "refresh",
+    "readme"
+]
+
 
 # Define the model in which the user data, tokens and messages are stored
 @dataclass

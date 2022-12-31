@@ -11,7 +11,7 @@ from __main__ import create_new_user, add_new_message, compose_location_message_
 from __main__ import db
 from __main__ import User
 
-from __main__ import whitelist_only, message_string
+from __main__ import whitelist_only, message_string, command_list
 
 from __main__ import send_message
 from __main__ import onboarding_workflow
@@ -94,6 +94,7 @@ def webhook():
                 else:
                     return "error"
 
+            # If it is not a new user, process the message
             if user:
 
                 # Set the default to be no result
@@ -124,12 +125,6 @@ def webhook():
                     message_contents = whatsapp_messenger.get_message(data)
 
                     # Check whether the message contains a command
-                    command_list = [
-                        "help",
-                        "token",
-                        "refresh",
-                        "readme"
-                    ]
 
                     # Deal with help commands
                     if message_contents.lower() in command_list:
@@ -171,12 +166,9 @@ def webhook():
                                 }
                             },
                         )
-
-                    # If the message contains a command only, exit the function so it is not added to the database
-                    if message_contents.lower() in command_list:
                         return "ok"
 
-                    # Add the message to the database
+                    # If not, add the message to the database
                     message_id = whatsapp_messenger.get_message_id(data)
                     result = add_new_message(
                         user_id=user.id,
@@ -190,8 +182,8 @@ def webhook():
                     message_location = whatsapp_messenger.get_location(data)
 
                     # Get the essential location data
-                    location_latitude = message_location["latitude"] # always included
-                    location_longitude = message_location["longitude"] # always included
+                    location_latitude = message_location["latitude"]  # always included
+                    location_longitude = message_location["longitude"]  # always included
 
                     # Optional fields
                     location_name = message_location.get("name")

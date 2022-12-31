@@ -76,7 +76,6 @@ def telegram_webhook():
 	if request.method == 'POST':
 		# Get the message from the user
 		data = request.get_json()
-		#pprint.pprint(data)
 
 		# Start putting the mandatory fields into the message_received dictionary, return an error if there's a problem
 		try:
@@ -86,6 +85,7 @@ def telegram_webhook():
 				'mobile': data['message']['from']['id'],
 			}
 		except:
+			print ("Error parsing JSON")
 			return "Error: Telegram message missing mandatory fields"
 
 		# Check if this is a new user
@@ -104,7 +104,7 @@ def telegram_webhook():
 			else:
 				return "error"
 
-		# If it's not a new user, say hello
+		# If it's not a new user, process the image and add it to the database
 		if user:
 
 			# Work out the message type and get the relevant information
@@ -133,7 +133,7 @@ def telegram_webhook():
 				if 'video' in data['message']:
 					message_received['message_type'] = 'video'
 					message_received['file_id'] = data['message']['video']['file_id']
-					message_received['file_name'] = data['message']['video']['file_name']
+					message_received['file_name'] = f"{secrets.token_hex(6)}{['message']['video']['file_name']}"
 
 				# Get the caption if there is one
 				if 'caption' in data['message']:
@@ -181,7 +181,37 @@ def telegram_webhook():
 				else:
 					logging.error("Error downloading file from Telegram")
 
+			if 'location' in data['message']:
+				message_received['message_type'] = 'location'
+				message_received['location_latitude'] = data['message']['location']['latitude']
+				message_received['location_longitude'] = data['message']['location']['longitude']
 
+				#pprint.pprint (data['message']['location'])
+
+				if "venue" in data['message']:
+					message_received['location_title'] = data['message']['venue'].get('title')
+					message_received['location_address'] = data['message']['venue'].get('address')
+				else:
+					message_received['location_title'] = None
+					message_received['location_address'] = None
+
+				# Add the message to the database
+				message_received['message_contents'] = compose_location_message_contents(
+					location_latitude=message_received['location_latitude'],
+					location_longitude=message_received['location_longitude'],
+					location_name=message_received['location_title'],
+					location_address=message_received['location_address']
+				)
+
+				result = add_new_message(
+					user_id=user.id,
+					provider=provider,
+					message_contents=message_received['message_contents'],
+					provider_message_id=message_received['telegram_message_id'],
+				)
+
+			else:
+				pprint.pprint (data['message'])
 
 			# If message type has not been set then return an error
 			if result:
@@ -191,6 +221,5 @@ def telegram_webhook():
 				logging.error("Failed to add message to database")
 				send_message(provider, message_received['telegram_chat_id'], message_string["error_with_message"])
 				return "Failed to add message to database"
-
 
 			return "ok"
