@@ -28,6 +28,7 @@ migrate = Migrate(app, db)
 
 # Define global paths and uris
 app_uri = "https://loglink.it/"
+media_uploads_folder = "media_uploads"
 
 # Global app settings
 whitelist_only = True
@@ -37,12 +38,19 @@ delete_immediately = True  # This setting means messages are deleted immediately
 message_string = {
     "problem_creating_user_generic": "There was a problem creating your account.",
     "problem_creating_user_whitelist": "There was a problem creating your account. This may be because your mobile number is not on the whitelist.",
-    "welcome_to_loglink": "Welcome to LogLink, your token will be send in the next message (for easy copying)",
+    "welcome_to_loglink": "Welcome to LogLink, your token will be sent in the next message (for easy copying)",
     "token_will_be_sent_in_next_message": "Your token will be sent in the next message (for easy copying)",
     "resetting_your_token": "Resetting your token.",
     "token_reset": "Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.",
-    "more_help": f"Please visit {app_uri} for more assistance"
+    "more_help": f"Please visit {app_uri} for more assistance",
+    "error_with_message": "This message could not be saved",
 }
+
+# Valid providers
+valid_providers = [
+    "whatsapp",
+    "telegram",
+]
 
 
 # Define the model in which the user data, tokens and messages are stored
@@ -51,10 +59,9 @@ class User(db.Model):
     id:int = db.Column(db.Integer, primary_key=True)
 
     token:str = db.Column(db.String(80), unique=True, nullable=False)
-    phone_number:str = db.Column(db.String(20), unique=True, nullable=True)
-    chat_id:str = db.Column(db.String(30), unique=False, nullable=True)
+    provider_id:str = db.Column(db.String(30), unique=True, nullable=True)  # For whatsapp this is a phone number, for telegram this is a chat_id
 
-    account_type:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+    provider:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
     approved:bool = db.Column(db.Boolean, nullable=False, default=True)
 
     api_call_count:int = db.Column(db.Integer, default=0)
@@ -64,7 +71,7 @@ class User(db.Model):
 class Message(db.Model):
     id:int = db.Column(db.Integer, primary_key=True)
 
-    received_from:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+    provider:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
 
     provider_message_id:str = db.Column(db.String(100))
 
@@ -94,38 +101,40 @@ def random_token(token_type="whatsapp"):
     length = 4
     if token_type == "whatsapp":
         return "whatsapp"+secrets.token_hex(length)
+    if token_type == "telegram":
+        return "telegram"+secrets.token_hex(length)
     return "unknown"+secrets.token_hex(length)
 
 
 def create_new_user(
-    account_type="whatsapp",
-    approved=True,
-    phone_number=None,
-    chat_id=None,
+    provider,
+    provider_id,
+    approved=True
 ):
+
+    if provider not in valid_providers:
+        return False
+
     # If whitelist only, check if the phone number is in the whitelist
     if whitelist_only:
-        if phone_number not in whitelist.acceptable_numbers:
-            return False
+        if provider=="whatsapp":
+            if provider_id not in whitelist.acceptable_numbers:
+                return False
 
-    if account_type.lower() == "whatsapp":
-        new_user = User(
-            phone_number=phone_number,
-            token=random_token(),
-            account_type=account_type,
-            approved=approved,
-            chat_id=chat_id,
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        return new_user
-
-    return False
+    new_user = User(
+        provider_id=provider_id,
+        token=random_token(provider),
+        provider=provider,
+        approved=approved
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    return new_user
 
 
 def add_new_message(
     user_id,
-    received_from,
+    provider,
     message_contents,
     provider_message_id=None,
 ):
@@ -144,7 +153,7 @@ def add_new_message(
     new_message = Message(
         user_id=user_id,
         provider_message_id=provider_message_id,
-        received_from=received_from,
+        provider=provider,
         contents=message_contents,
         timestamp=datetime.now(),
     )
@@ -192,12 +201,12 @@ def compose_location_message_contents(
 
 
 def compose_image_message_contents(
-        image_filename,
+        image_file_path,
         caption=None
 ):
 
     # Upload the image to imgur
-    imgur_result = imgur.upload_image(image_filename)
+    imgur_result = imgur.upload_image(image_file_path)
 
     if not imgur_result:
         return False
@@ -219,6 +228,9 @@ def send_message(
     contents
 ):
 
+    if provider not in valid_providers:
+        return False
+
     if provider == 'whatsapp':
         whatsapp.whatsapp_messenger.send_message(contents, provider_id)
         return True
@@ -230,10 +242,37 @@ def send_message(
     return False
 
 
+def onboarding_workflow(
+    provider,
+    provider_id
+):
+
+    if provider not in valid_providers:
+        return False
+
+    # Create a new user
+    user = create_new_user(
+        provider=provider,
+        provider_id=provider_id
+    )
+    if not user:
+        logging.error("Failed to create new user")
+        if whitelist_only:
+            send_message(provider, provider_id, message_string["problem_creating_user"])
+        else:
+            send_message(provider, provider_id, message_string["problem_creating_user_generic"])
+        return False
+
+    logging.info("New user: %s", user.provider_id)
+    send_message(provider, provider_id, message_string["welcome_to_loglink"])
+    send_message(provider, provider_id, user.token)
+    return True
+
 
 # Import other routes
 import whatsapp
 import telegram
+
 
 #####################
 # ROUTES            #
@@ -286,7 +325,7 @@ def get_new_messages():
 
             message_in_memory = message
             new_messages.append(message_in_memory)
-            if message.received_from == "whatsapp":
+            if message.provider == "whatsapp":
                 whatsapp.mark_whatsapp_message_read(message.provider_message_id)
 
     # Mark them as read and delete them from the database

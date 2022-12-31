@@ -11,13 +11,44 @@ from __main__ import create_new_user, add_new_message, compose_location_message_
 from __main__ import db
 from __main__ import User
 
-from __main__ import whitelist_only, message_string
+from __main__ import whitelist_only, message_string, media_uploads_folder
+
+from __main__ import send_message
+from __main__ import onboarding_workflow
 
 import secretstuff
 
-telegram_api_url = f"https://api.telegram.org/{secretstuff.telegram_full_token}"
+telegram_base_api_url = 'https://api.telegram.org'
+telegram_api_url = f"{telegram_base_api_url}/{secretstuff.telegram_full_token}"
 
 provider = 'telegram'
+
+
+def download_file_from_telegram(
+	file_path,
+	extension="jpg",
+	save_name=None
+):
+
+	if not save_name:
+		save_name = secrets.token_hex(16) + "." + extension
+
+	# Download the image
+	url = f"{telegram_base_api_url}/file/{secretstuff.telegram_full_token}/{file_path}"
+	print(url)
+	r = requests.get(url)
+
+	print (r)
+
+	if r.status_code == 200:
+		file_save_path = f"{media_uploads_folder}/{save_name}"
+		print (file_save_path)
+		with open(file_save_path, 'wb') as f:
+			f.write(r.content)
+
+		return save_name
+	else:
+		return False
 
 
 def send_telegram_message(
@@ -39,7 +70,6 @@ def send_telegram_message(
 		return False
 
 
-
 @app.route('/telegram/webhook/', methods=['POST'])
 def telegram_webhook():
 
@@ -58,58 +88,109 @@ def telegram_webhook():
 		except:
 			return "Error: Telegram message missing mandatory fields"
 
-		# See if this is a new user:
-		user = User.query.filter_by(mobile=message_received['mobile']).first()
+		# Check if this is a new user
+		user = User.query.filter_by(provider_id=message_received['telegram_chat_id']).first()
 
 		# If it is a new user, create the account and return the token
 		if not user:
-			user = create_new_user(
-				account_type="telegram",
-				phone_number=message_received['mobile'],
-				chat_id=message_received['telegram_chat_id'],
+
+			onboarding_result = onboarding_workflow(
+				provider=provider,
+				provider_id=message_received['telegram_chat_id'],
 			)
-			if not user:
-				logging.error("Failed to create new user")
-				if whitelist_only:
-					send_telegram_message(message_string["problem_creating_user"], message_received['mobile'])
-				else:
-					send_telegram_message(message_string["problem_creating_user_generic"], message_received['mobile'])
-				return "Failed to create new user"
 
-			logging.info("New user: %s", user.phone_number)
-			send_telegram_message(message_string["welcome_to_loglink"], message_received['mobile'])
-			send_telegram_message(user.token, message_received['mobile'])
-			return "ok"
+			if onboarding_result:
+				return "ok"
+			else:
+				return "error"
 
-		# If it is not a new user, process the message
+		# If it's not a new user, say hello
 		if user:
 
 			# Work out the message type and get the relevant information
-			message_type = None
+			result = False
+
+			pprint.pprint(data['message'])
+
 			if 'text' in data['message']:
 				message_received['message_type'] = 'text'
 				message_received['message_contents'] = data['message']['text']
 
 				# Add the message to the database
-				message_id = message_received['telegram_message_id']
 				result = add_new_message(
 					user_id=user.id,
-					received_from="whatsapp",
+					provider=provider,
 					message_contents=message_received['message_contents'],
-					provider_message_id=message_received['telegram_message_id']
+					provider_message_id=message_received['telegram_message_id'],
 				)
 
-			elif 'photo' in data['message']:
-				message_received['message_type'] = 'photo'
-				message_received['photo_id'] = data['message']['photo'][0]['file_id']
+			elif 'photo' in data['message'] or 'video' in data['message']:
+
+				if 'photo' in data['message']:
+					message_received['message_type'] = 'photo'
+					message_received['file_id'] = data['message']['photo'][-1]['file_id']
+
+				if 'video' in data['message']:
+					message_received['message_type'] = 'video'
+					message_received['file_id'] = data['message']['video']['file_id']
+					message_received['file_name'] = data['message']['video']['file_name']
+
+				# Get the caption if there is one
 				if 'caption' in data['message']:
 					message_received['caption'] = data['message']['caption']
+				else:
+					message_received['caption'] = None
 
-			pprint.pprint (message_received)
+				# Download the file from telegram
 
-			send_telegram_message(
-				message_received['telegram_chat_id'],
-				"received"
-			)
+				# Get the file path from the Telegram API
+				r = requests.get(telegram_api_url + '/getFile?file_id=' + message_received['file_id'])
+				message_received['file_path'] = r.json()['result']['file_path']
 
-	return "ok"
+				# Download the file from Telegram
+
+				if message_received['message_type'] == 'photo':
+					download_result = download_file_from_telegram(
+						file_path=message_received['file_path'],
+						extension="jpg",
+					)
+				if message_received['message_type'] == 'video':
+					download_result = download_file_from_telegram(
+						file_path=message_received['file_path'],
+						save_name=message_received['file_name'],
+					)
+
+				if download_result:
+					message_received['local_file_name'] = download_result
+					message_received['local_file_path'] = f"{media_uploads_folder}/{download_result}"
+
+					# Add the message to the database
+					message_received['message_contents'] = compose_image_message_contents(
+						image_file_path=message_received['local_file_path'],
+						caption=message_received['caption']
+					)
+					if message_received['message_contents']:
+						result = add_new_message(
+							user_id=user.id,
+							provider=provider,
+							message_contents=message_received['message_contents'],
+							provider_message_id=message_received['telegram_message_id']
+						)
+					else:
+						logging.error("Failed to upload image to imgur")
+				else:
+					logging.error("Error downloading file from Telegram")
+
+
+
+			# If message type has not been set then return an error
+			if result:
+				logging.info("Message added to database")
+				return "ok"
+			else:
+				logging.error("Failed to add message to database")
+				send_message(provider, message_received['telegram_chat_id'], message_string["error_with_message"])
+				return "Failed to add message to database"
+
+
+			return "ok"

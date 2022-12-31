@@ -14,6 +14,7 @@ from __main__ import User
 from __main__ import whitelist_only, message_string
 
 from __main__ import send_message
+from __main__ import onboarding_workflow
 
 # Set up Heyoo for WhatsApp API
 from heyoo import WhatsApp
@@ -78,26 +79,20 @@ def webhook():
             )
 
             # Check if this is a new user
-            user = User.query.filter_by(phone_number=mobile).first()
+            user = User.query.filter_by(provider_id=mobile).first()
 
             # If it is a new user, create the account and return the token
             if not user:
-                user = create_new_user(
-                    account_type=provider,
-                    phone_number=mobile
-                )
-                if not user:
-                    logging.error("Failed to create new user")
-                    if whitelist_only:
-                        send_message(provider, mobile, message_string["problem_creating_user"])
-                    else:
-                        send_message(provider, mobile, message_string["problem_creating_user_generic"])
-                    return "Failed to create new user"
 
-                logging.info("New user: %s", user.phone_number)
-                send_message(provider, mobile, message_string["welcome_to_loglink"])
-                send_message(provider, mobile, user.token)
-                return "ok"
+                onboarding_result = onboarding_workflow(
+                    provider=provider,
+                    provider_id=mobile,
+                )
+
+                if onboarding_result:
+                    return "ok"
+                else:
+                    return "error"
 
             if user:
 
@@ -185,7 +180,7 @@ def webhook():
                     message_id = whatsapp_messenger.get_message_id(data)
                     result = add_new_message(
                         user_id=user.id,
-                        received_from=provider,
+                        provider=provider,
                         message_contents=message_contents,
                         provider_message_id=message_id
                     )
@@ -214,7 +209,7 @@ def webhook():
                     if message_contents:
                         result = add_new_message(
                             user_id=user.id,
-                            received_from=provider,
+                            provider=provider,
                             message_contents=message_contents,
                             provider_message_id=message_id
                         )
@@ -238,17 +233,17 @@ def webhook():
                     uploads_folder = "media_uploads"
                     random_filename = secrets.token_hex(16)
                     random_path = f"{uploads_folder}/{random_filename}"
-                    image_filename = whatsapp_messenger.download_media(image_url, mime_type, random_path)
+                    image_file_path = whatsapp_messenger.download_media(image_url, mime_type, random_path)
 
                     message_contents = compose_image_message_contents(
-                        image_filename=image_filename,
+                        image_file_path=image_file_path,
                         caption = caption
                     )
 
                     if message_contents:
                         result = add_new_message(
                             user_id=user.id,
-                            received_from=provider,
+                            provider=provider,
                             message_contents=message_contents,
                             provider_message_id=message_id
                         )
@@ -272,6 +267,7 @@ def webhook():
                     return "ok"
                 else:
                     logging.error("Failed to add message to database")
+                    send_message(provider, mobile, message_string["error_with_message"])
                     return "Failed to add message to database"
 
     return "no change"
