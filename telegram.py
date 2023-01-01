@@ -17,7 +17,7 @@ from __main__ import send_message
 from __main__ import onboarding_workflow
 
 from __main__ import help_send_token_reminder, help_send_new_token, help_more_help
-
+from __main__ import app_uri
 
 import secretstuff
 
@@ -142,7 +142,7 @@ def telegram_webhook():
 						result = send_message(
 							provider,
 							message_received['telegram_chat_id'],
-							"You want help??"
+							"You can use the following commands to seek help:\n\n/token_reminder - Send yourself a reminder of your token\n/token_refresh - Generate a new token and send it to yourself\n/more_help - Get more help \n\nThe full instructions are at "+ app_uri
 						)
 
 					if message_received['message_contents'] == '/token' or message_received['message_contents'] == '/token_reminder':

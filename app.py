@@ -45,6 +45,7 @@ message_string = {
     "token_reset": "Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.",
     "more_help": f"Please visit {app_uri} for more assistance",
     "error_with_message": "This message could not be saved",
+    "plugin_instructions": "You should paste this token into your plugin settings in LogSeq",
 }
 
 # Valid providers
@@ -274,6 +275,7 @@ def onboarding_workflow(
     logging.info("New user: %s", user.provider_id)
     send_message(provider, provider_id, message_string["welcome_to_loglink"])
     send_message(provider, provider_id, user.token)
+    send_message(provider, provider_id, message_string["plugin_instructions"])
     return True
 
 
