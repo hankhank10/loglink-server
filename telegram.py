@@ -142,18 +142,29 @@ def telegram_webhook():
 						result = send_message(
 							provider,
 							message_received['telegram_chat_id'],
-							"You can use the following commands to seek help:\n\n/token_reminder - Send yourself a reminder of your token\n/token_refresh - Generate a new token and send it to yourself\n/more_help - Get more help \n\nThe full instructions are at "+ app_uri
+							message_string['telegram_help_message']
 						)
 
 					if message_received['message_contents'] == '/token' or message_received['message_contents'] == '/token_reminder':
-						help_send_token_reminder(user.id, provider, message_received['telegram_chat_id'])
+						result = help_send_token_reminder(user.id, provider, message_received['telegram_chat_id'])
 
 					if message_received['message_contents'] == '/refresh' or message_received['message_contents'] == '/token_refresh':
-						help_send_new_token(user.id, provider, message_received['telegram_chat_id'])
+						result = help_send_new_token(user.id, provider, message_received['telegram_chat_id'])
 
 					if message_received['message_contents'] == "/more_help":
-						help_more_help(user.id, provider, message_received['telegram_chat_id'])
+						result = help_more_help(user.id, provider, message_received['telegram_chat_id'])
 
+					if not result:
+						result = send_message(
+							provider,
+							message_received['telegram_chat_id'],
+							message_string["sorry_didnt_understand_command"]
+						)
+						send_message(
+							provider,
+							message_received['telegram_chat_id'],
+							message_string['telegram_help_message']
+						)
 
 				else:
 					# Add the message to the database

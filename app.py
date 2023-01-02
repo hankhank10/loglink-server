@@ -46,6 +46,8 @@ message_string = {
     "more_help": f"Please visit {app_uri} for more assistance",
     "error_with_message": "This message could not be saved",
     "plugin_instructions": "You should paste this token into your plugin settings in LogSeq",
+    "telegram_help_message": "You can use the following commands to seek help:\n\n/token_reminder - Send yourself a reminder of your token\n/token_refresh - Generate a new token and send it to yourself\n/more_help - Get more help \n\nThe full instructions are at " + app_uri,
+    "sorry_didnt_understand_command": "Sorry, I didn't understand that command."
 }
 
 # Valid providers
