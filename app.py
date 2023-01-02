@@ -33,7 +33,7 @@ media_uploads_folder = "media_uploads"
 # Global app settings
 whitelist_only = True
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
-token_length = 12
+token_length = 18
 
 # Message strings
 message_string = {
