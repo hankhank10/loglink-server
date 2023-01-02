@@ -28,6 +28,7 @@ migrate = Migrate(app, db)
 
 # Define global paths and uris
 app_uri = "https://loglink.it/"
+security_disclaimer_api = f"{app_uri}docs/important-notice"
 media_uploads_folder = "media_uploads"
 
 # Global app settings
@@ -39,7 +40,7 @@ token_length = 18
 message_string = {
     "problem_creating_user_generic": "There was a problem creating your account.",
     "problem_creating_user_whitelist": "There was a problem creating your account. This may be because your mobile number is not on the whitelist.",
-    "welcome_to_loglink": "Welcome to LogLink, your token will be sent in the next message (for easy copying)",
+    "welcome_to_loglink": f"Welcome to LogLink. By continuing to use LogLink you are confirming that you have read and understood the really important security and service message here ({security_disclaimer_api}), that you accept the risks, accept that the creator(s) accept no liability and confirm that it is suitable for your use case.",
     "token_will_be_sent_in_next_message": "Your token will be sent in the next message (for easy copying)",
     "resetting_your_token": "Resetting your token.",
     "token_reset": "Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.",
@@ -276,6 +277,7 @@ def onboarding_workflow(
 
     logging.info("New user: %s", user.provider_id)
     send_message(provider, provider_id, message_string["welcome_to_loglink"])
+    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"])
     send_message(provider, provider_id, user.token)
     send_message(provider, provider_id, message_string["plugin_instructions"])
     return True
