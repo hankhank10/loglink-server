@@ -130,10 +130,10 @@ def webhook():
                                 "type": "button",
                                 "header": {
                                     "type": "text",
-                                    "text": "! DANGER ZONE !"
+                                    "text": "❗❗❗ DANGER ZONE ❗❗❗"
                                 },
                                 "body": {
-                                    "text": "Are you sure you want to delete your account? "
+                                    "text": "Are you sure you want to delete your account? This will result in all your messages being deleted."
                                 },
                                 "action": {
                                     "buttons": [
@@ -156,11 +156,12 @@ def webhook():
                             }
                         )
 
-                        if message_id == "disregard_delete_account":
-                            result = send_message(provider, mobile, "Ok, I won't delete your account.")
+                    if message_id == "disregard_delete_account":
+                        print ("FORGETIT!")
+                        result = send_message(provider, mobile, "Ok, I won't delete your account.")
 
-                        if message_id == "confirm_delete_account":
-                            result = offboarding_workflow(provider, mobile)
+                    if message_id == "confirm_delete_account":
+                        result = offboarding_workflow(provider, mobile)
 
                     result = True
 
