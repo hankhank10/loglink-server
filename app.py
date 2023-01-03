@@ -96,8 +96,14 @@ class Message(db.Model):
 # HOUSEKEEPING #
 #################
 
-def delete_delivered_messages(user_id):
-    messages = Message.query.filter_by(user_id=user_id, delivered=True)
+def delete_delivered_messages(user_id=None):
+
+    # If user_id is provided, only delete messages for that user, otherwise delete all delivered messages for all users
+    if user_id:
+        messages = Message.query.filter_by(user_id=user_id, delivered=True)
+    else:
+        messages = Message.query.filter_by(delivered=True)
+
     for message in messages:
         db.session.delete(message)
     db.session.commit()
@@ -335,7 +341,7 @@ import telegram
 
 @app.route('/')
 def index():
-    return "API is running"
+    return "🟢 API is running"
 
 
 @app.route('/get_new_messages/', methods=['POST'])
@@ -344,7 +350,7 @@ def get_new_messages():
     # Check that we have been sent JSON
     try:
         posted_json = request.get_json()
-        user_id = posted_json['user_id']
+        user_id = posted_json.get('user_id')
     except:
         return jsonify({
             'status': 'error',
@@ -370,7 +376,7 @@ def get_new_messages():
             'message': 'No user found with that token. Try refreshing your token at ' + app_uri + ' and is ensure it is correctly entered in settings.'
         }, 404
 
-    # Get the messages
+    # Get the messages from the database
     messages = Message.query.filter_by(user_id=user.id).all()
 
     new_messages = []
