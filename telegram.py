@@ -208,6 +208,7 @@ def telegram_webhook():
 
 				# Download the file from Telegram
 
+				download_result = False
 				if message_received['message_type'] == 'photo':
 					download_result = download_file_from_telegram(
 						file_path=message_received['file_path'],
