@@ -101,8 +101,8 @@ class Message(db.Model):
 #################
 
 def delete_delivered_messages(user_id=None):
-
     # If user_id is provided, only delete messages for that user, otherwise delete all delivered messages for all users
+
     if user_id:
         messages = Message.query.filter_by(user_id=user_id, delivered=True)
     else:
@@ -111,6 +111,8 @@ def delete_delivered_messages(user_id=None):
     for message in messages:
         db.session.delete(message)
     db.session.commit()
+
+    return True
 
 
 def random_token(token_type=None):
