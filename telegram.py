@@ -35,7 +35,8 @@ command_list = [
 	"/token_refresh",
 	"/more_help",
     "/readme",
-	"/delete_account"
+	"/delete_account",
+	"/delete_account_confirm",
 ]
 
 
@@ -156,7 +157,15 @@ def telegram_webhook():
 						result = help_more_help(user.id, provider, message_received['telegram_chat_id'])
 
 					if message_received['message_contents'] == "/delete_account":
+						result = send_message(
+							provider,
+							message_received['telegram_chat_id'],
+							message_string['telegram_ask_confirm_delete_account']
+						)
+
+					if message_received['message_contents'] == "/delete_account_confirm":
 						result = offboarding_workflow(provider, message_received['telegram_chat_id'])
+
 
 					if not result:
 						result = send_message(
