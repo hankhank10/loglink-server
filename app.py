@@ -47,7 +47,7 @@ message_string = {
     "more_help": f"Please visit {app_uri} for more assistance",
     "error_with_message": "This message could not be saved",
     "plugin_instructions": "You should paste this token into your plugin settings in LogSeq",
-    "telegram_help_message": "You can use the following commands to seek help:\n\n/token_reminder - Send yourself a reminder of your token\n/token_refresh - Generate a new token and send it to yourself\n/more_help - Get more help\n/delete_account - Delete your account\n\nThe full instructions are at " + app_uri + "",
+    "telegram_help_message": "You can use the following commands to seek help:\n\n/token_refresh - Generate a new token and send it to yourself\n/more_help - Get more help\n/delete_account - Delete your account\n\nThe full instructions are at " + app_uri + "",
     "sorry_didnt_understand_command": "Sorry, I didn't understand that command.",
     "delete_failed_not_in_database": "No record associated with this ID found in the database",
     "user_deleted": "Your account and all associated messages were deleted",
@@ -323,20 +323,6 @@ def offboarding_workflow(
     db.session.commit()
 
     send_message(provider, provider_id, message_string["user_deleted"])
-    return True
-
-
-def help_send_token_reminder(
-    user_id,
-    provider,
-    provider_id
-):
-    user = User.query.filter_by(id=user_id).first()
-    if not user:
-        logging.error("User not found")
-        return False
-    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"])
-    send_message(provider, provider_id, user.token)
     return True
 
 

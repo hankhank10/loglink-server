@@ -16,7 +16,7 @@ from __main__ import whitelist_only, message_string
 from __main__ import send_message
 from __main__ import onboarding_workflow, offboarding_workflow
 
-from __main__ import help_send_token_reminder, help_send_new_token, help_more_help
+from __main__ import help_send_new_token, help_more_help
 
 # Set up Heyoo for WhatsApp API
 from heyoo import WhatsApp
@@ -118,9 +118,6 @@ def webhook():
                     interactive_type = message_response.get("type")
                     message_id = message_response[interactive_type]["id"]
 
-                    if message_id == "token_reminder":
-                        help_send_token_reminder(user.id, provider, mobile)
-
                     if message_id == "new_token":
                         help_send_new_token(user.id, provider, mobile)
 
@@ -191,13 +188,6 @@ def webhook():
                                 },
                                 "action": {
                                     "buttons": [
-                                        {
-                                            "type": "reply",
-                                            "reply": {
-                                                "id": "token_reminder",
-                                                "title": "Send token reminder"
-                                            }
-                                        },
                                         {
                                             "type": "reply",
                                             "reply": {

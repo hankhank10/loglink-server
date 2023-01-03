@@ -16,7 +16,7 @@ from __main__ import whitelist_only, message_string, media_uploads_folder
 from __main__ import send_message
 from __main__ import onboarding_workflow, offboarding_workflow
 
-from __main__ import help_send_token_reminder, help_send_new_token, help_more_help
+from __main__ import help_send_new_token, help_more_help
 from __main__ import app_uri
 
 import secretstuff
@@ -29,8 +29,6 @@ provider = 'telegram'
 command_list = [
 	'/start',
     "/help",
-    "/token",
-	"/token_reminder",
     "/refresh",
 	"/token_refresh",
 	"/more_help",
@@ -146,9 +144,6 @@ def telegram_webhook():
 							message_received['telegram_chat_id'],
 							message_string['telegram_help_message']
 						)
-
-					if message_received['message_contents'] == '/token' or message_received['message_contents'] == '/token_reminder':
-						result = help_send_token_reminder(user.id, provider, message_received['telegram_chat_id'])
 
 					if message_received['message_contents'] == '/refresh' or message_received['message_contents'] == '/token_refresh':
 						result = help_send_new_token(user.id, provider, message_received['telegram_chat_id'])
