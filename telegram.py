@@ -20,6 +20,9 @@ from __main__ import app_uri
 
 import secretstuff
 
+from __main__ import escape_markdown
+
+
 telegram_base_api_url = 'https://api.telegram.org'
 telegram_api_url = f"{telegram_base_api_url}/{secretstuff.telegram_full_token}"
 
@@ -30,6 +33,7 @@ command_list = [
     "/help",
     "/refresh",
 	"/token_refresh",
+	"/token_refresh_confirm",
 	"/more_help",
     "/readme",
 	"/delete_account",
@@ -64,14 +68,19 @@ def send_telegram_message(
 	telegram_chat_id,
 	message_contents
 ):
+	message_contents = escape_markdown(message_contents)
+
 	payload = {
 		'chat_id': telegram_chat_id,
 		'text': message_contents,
+		'parse_mode': 'MarkdownV2',
 	}
 	url = telegram_api_url + '/sendMessage'
 	response = requests.post(url, json=payload)
 
 	logging.info ("Message sent to Telegram webhook")
+
+	print(response.json())
 
 	if response.status_code == 200:
 		return True
@@ -145,7 +154,14 @@ def telegram_webhook():
 							message_string['telegram_help_message']
 						)
 
-					if message_received['message_contents'] == '/refresh' or message_received['message_contents'] == '/token_refresh':
+					if message_received['message_contents'] == '/token_refresh':
+						result = send_message(
+							provider,
+							message_received['telegram_chat_id'],
+							f"{message_string['danger_zone']}^^{message_string['confirm_refresh_token']}{message_string['confirm_refresh_token_telegram_suffix']}"
+						)
+
+					if message_received['message_contents'] == '/token_refresh_confirm':
 						result = help_send_new_token(user.id, provider, message_received['telegram_chat_id'])
 
 					if message_received['message_contents'] == "/more_help":
@@ -155,7 +171,7 @@ def telegram_webhook():
 						result = send_message(
 							provider,
 							message_received['telegram_chat_id'],
-							message_string['telegram_ask_confirm_delete_account']
+							f"{message_string['danger_zone']}^^{message_string['confirm_delete_account']}{message_string['confirm_delete_account_telegram_suffix']}"
 						)
 
 					if message_received['message_contents'] == "/delete_account_confirm":

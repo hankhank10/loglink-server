@@ -55,17 +55,20 @@ message_string = {
     "problem_creating_user_generic": "There was a problem creating your account.",
     "problem_creating_user_whitelist": "There was a problem creating your account. This may be because your mobile number is not on the whitelist.",
     "welcome_to_loglink": f"Welcome to LogLink. By continuing to use LogLink you are confirming that you have read and understood the really important security and service message here ({security_disclaimer_api}), that you accept the risks, accept that the creator(s) accept no liability and confirm that it is suitable for your use case.",
-    "token_will_be_sent_in_next_message": "Your token will be sent in the next message (for easy copying)",
+    "token_will_be_sent_in_next_message": "Your token will be sent in the next message (for easy copying). Do not share this token with anyone else.",
+    "do_not_share_token": "❗Do not share your token with anyone else",
     "resetting_your_token": "Resetting your token.",
-    "token_reset": "Your refreshed token will be sent in the next message (for easy copying). You will need to re-input this into your plugin settings.",
     "more_help": f"Please visit {app_uri} for more assistance",
     "error_with_message": "This message could not be saved",
-    "plugin_instructions": "You should paste this token into your plugin settings in LogSeq",
-    "telegram_help_message": "You can use the following commands to seek help:\n\n/token_refresh - Generate a new token and send it to yourself\n/more_help - Get more help\n/delete_account - Delete your account\n\nThe full instructions are at " + app_uri + "",
+    "plugin_instructions": "You should paste this token into your plugin settings in LogSeq.",
+    "telegram_help_message": "*LogLink Help Menu*^^You can use the following commands to seek help:^^/token_refresh: Generate a new token and send it to yourself^/delete_account: Delete your account^^The full instructions are at " + app_uri + "",
     "sorry_didnt_understand_command": "Sorry, I didn't understand that command.",
     "delete_failed_not_in_database": "No record associated with this ID found in the database",
-    "user_deleted": "Your account and all associated messages were deleted",
-    "telegram_ask_confirm_delete_account": "Are you sure you want to delete your account? This will remove all your messages and your account.\n\nType /delete_account_confirm to confirm.",
+    "user_deleted": "Your account and all associated messages were deleted. If you want to use the service again, send another message.",
+    "confirm_delete_account": "Are you sure you want to delete your account? This will delete all messages associated with your account.",
+    "confirm_delete_account_telegram_suffix": "^^Type /delete_account_confirm to confirm.",
+    "confirm_refresh_token": "Are you sure you want to refrsh your token? This will delete all messages associated with your account.",
+    "confirm_refresh_token_telegram_suffix": "^^Type /token_refresh_confirm to confirm.",
     "danger_zone": "❗ DANGER ZONE ❗"
 }
 
@@ -110,10 +113,30 @@ class Message(db.Model):
         return (datetime.now() - self.timestamp).seconds / 60
 
 
-
 #################
 # HOUSEKEEPING #
 #################
+
+
+
+def escape_markdown(text, carriage_return_only = False):
+
+    if not carriage_return_only:
+        char_list = [
+            "_",
+            "-",
+            ".",
+            "(",
+            ")"
+        ]
+
+        for char in char_list:
+            text = text.replace(char, f"\\{char}")
+
+    text = text.replace("^", "\n")
+
+    return text
+
 
 def delete_delivered_messages(user_id=None):
     # If user_id is provided, only delete messages for that user, otherwise delete all delivered messages for all users
@@ -130,8 +153,6 @@ def delete_delivered_messages(user_id=None):
         db.session.commit()
     except:
         return False
-    return True
-
     return True
 
 
@@ -377,7 +398,7 @@ def help_send_new_token(
     user.token = random_token(provider)
     db.session.commit()
     send_message(provider, provider_id, message_string["resetting_your_token"])
-    send_message(provider, provider_id, message_string["token_reset"])
+    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"])
     send_message(provider, provider_id, user.token)
     return True
 

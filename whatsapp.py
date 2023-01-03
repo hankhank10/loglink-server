@@ -124,10 +124,10 @@ def webhook():
                                 "type": "button",
                                 "header": {
                                     "type": "text",
-                                    "text": "❗ DANGER ZONE ❗"
+                                    "text": message_string['danger_zone']
                                 },
                                 "body": {
-                                    "text": "Are you sure you want to get a new token? This will result in all your existing messages being deleted."
+                                    "text": message_string['confirm_refresh_token']
                                 },
                                 "action": {
                                     "buttons": [
@@ -163,10 +163,10 @@ def webhook():
                                 "type": "button",
                                 "header": {
                                     "type": "text",
-                                    "text": "❗ DANGER ZONE ❗"
+                                    "text": message_string['danger_zone']
                                 },
                                 "body": {
-                                    "text": "Are you sure you want to delete your account? This will result in all your messages being deleted."
+                                    "text": message_string['confirm_refresh_token']
                                 },
                                 "action": {
                                     "buttons": [
