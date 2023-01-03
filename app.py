@@ -495,6 +495,7 @@ def check_health():
         'telegram_webhook': telegram.check_webhook_health()
     }
 
+
 # Run the app
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5010, debug=True)
