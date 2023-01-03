@@ -66,6 +66,7 @@ message_string = {
     "delete_failed_not_in_database": "No record associated with this ID found in the database",
     "user_deleted": "Your account and all associated messages were deleted",
     "telegram_ask_confirm_delete_account": "Are you sure you want to delete your account? This will remove all your messages and your account.\n\nType /delete_account_confirm to confirm.",
+    "danger_zone": "❗ DANGER ZONE ❗"
 }
 
 # Valid providers

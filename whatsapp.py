@@ -118,10 +118,43 @@ def webhook():
                     message_id = message_response[interactive_type]["id"]
 
                     if message_id == "new_token":
-                        help_send_new_token(user.id, provider, mobile)
+                        whatsapp_messenger.send_reply_button(
+                            recipient_id=mobile,
+                            button={
+                                "type": "button",
+                                "header": {
+                                    "type": "text",
+                                    "text": "❗ DANGER ZONE ❗"
+                                },
+                                "body": {
+                                    "text": "Are you sure you want to get a new token? This will result in all your existing messages being deleted."
+                                },
+                                "action": {
+                                    "buttons": [
+                                        {
+                                            "type": "reply",
+                                            "reply": {
+                                                "id": "new_token_confirm",
+                                                "title": "Yes, get a new token"
+                                            }
+                                        },
+                                        {
+                                            "type": "reply",
+                                            "reply": {
+                                                "id": "disregard",
+                                                "title": "Disregard"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        )
+
+                    if message_id == "new_token_confirm":
+                        result = help_send_new_token(user.id, provider, mobile)
 
                     if message_id == "more_help":
-                        help_more_help(user.id, provider, mobile)
+                        result = help_more_help(user.id, provider, mobile)
 
                     if message_id == "delete_account":
                         whatsapp_messenger.send_reply_button(
@@ -130,7 +163,7 @@ def webhook():
                                 "type": "button",
                                 "header": {
                                     "type": "text",
-                                    "text": "❗❗❗ DANGER ZONE ❗❗❗"
+                                    "text": "❗ DANGER ZONE ❗"
                                 },
                                 "body": {
                                     "text": "Are you sure you want to delete your account? This will result in all your messages being deleted."
@@ -140,14 +173,14 @@ def webhook():
                                         {
                                             "type": "reply",
                                             "reply": {
-                                                "id": "confirm_delete_account",
+                                                "id": "delete_account_confirm",
                                                 "title": "Yes, delete account"
                                             }
                                         },
                                         {
                                             "type": "reply",
                                             "reply": {
-                                                "id": "disregard_delete_account",
+                                                "id": "disregard",
                                                 "title": "Disregard"
                                             }
                                         }
@@ -156,11 +189,11 @@ def webhook():
                             }
                         )
 
-                    if message_id == "disregard_delete_account":
-                        result = send_message(provider, mobile, "Ok, I won't delete your account.")
-
-                    if message_id == "confirm_delete_account":
+                    if message_id == "delete_account_confirm":
                         result = offboarding_workflow(provider, mobile)
+
+                    if message_id == "disregard":
+                        result = send_message(provider, mobile, "Ok, ignoring.")
 
                     result = True
 
