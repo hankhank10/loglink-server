@@ -14,7 +14,7 @@ from __main__ import User
 from __main__ import whitelist_only, message_string, media_uploads_folder
 
 from __main__ import send_message
-from __main__ import onboarding_workflow
+from __main__ import onboarding_workflow, offboarding_workflow
 
 from __main__ import help_send_token_reminder, help_send_new_token, help_more_help
 from __main__ import app_uri
@@ -34,7 +34,8 @@ command_list = [
     "/refresh",
 	"/token_refresh",
 	"/more_help",
-    "/readme"
+    "/readme",
+	"/delete_account"
 ]
 
 
@@ -153,6 +154,9 @@ def telegram_webhook():
 
 					if message_received['message_contents'] == "/more_help":
 						result = help_more_help(user.id, provider, message_received['telegram_chat_id'])
+
+					if message_received['message_contents'] == "/delete_account":
+						result = offboarding_workflow(provider, message_received['telegram_chat_id'])
 
 					if not result:
 						result = send_message(
