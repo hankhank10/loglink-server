@@ -157,7 +157,6 @@ def webhook():
                         )
 
                     if message_id == "disregard_delete_account":
-                        print ("FORGETIT!")
                         result = send_message(provider, mobile, "Ok, I won't delete your account.")
 
                     if message_id == "confirm_delete_account":

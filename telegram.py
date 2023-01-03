@@ -48,7 +48,6 @@ def download_file_from_telegram(
 
 	# Download the image
 	url = f"{telegram_base_api_url}/file/{secretstuff.telegram_full_token}/{file_path}"
-	print(url)
 	r = requests.get(url)
 
 	if r.status_code == 200:
@@ -72,7 +71,7 @@ def send_telegram_message(
 	url = telegram_api_url + '/sendMessage'
 	response = requests.post(url, json=payload)
 
-	logging.info ("Message sent to " + url + " response code was " + str(response.status_code))
+	logging.info ("Message sent to Telegram webhook")
 
 	if response.status_code == 200:
 		return True
@@ -126,8 +125,6 @@ def telegram_webhook():
 
 			# Work out the message type and get the relevant information
 			result = False
-
-			#pprint.pprint(data['message'])
 
 			if 'text' in data['message']:
 				message_received['message_type'] = 'text'
@@ -248,8 +245,6 @@ def telegram_webhook():
 				message_received['location_latitude'] = data['message']['location']['latitude']
 				message_received['location_longitude'] = data['message']['location']['longitude']
 
-				#pprint.pprint (data['message']['location'])
-
 				if "venue" in data['message']:
 					message_received['location_title'] = data['message']['venue'].get('title')
 					message_received['location_address'] = data['message']['venue'].get('address')
@@ -274,7 +269,7 @@ def telegram_webhook():
 
 			# If message type has not been set then return an error
 			if result:
-				logging.info("Message added to database")
+				logging.info("Message successfully handled")
 				return "ok"
 			else:
 				logging.error("Failed to add message to database")
