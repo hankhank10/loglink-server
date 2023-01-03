@@ -21,7 +21,7 @@ app = Flask(__name__)
 # Create the DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///messages.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config["JSON_SORT_KEYS"] = False
+app.config['JSON_SORT_KEYS'] = False
 app.config['SECRET_KEY'] = secretstuff.app_secret_key
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -64,9 +64,10 @@ class User(db.Model):
     id:int = db.Column(db.Integer, primary_key=True)
 
     token:str = db.Column(db.String(80), unique=True, nullable=False)
-    provider_id:str = db.Column(db.String(30), unique=True, nullable=True)  # For whatsapp this is a phone number, for telegram this is a chat_id
 
     provider:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+    provider_id:str = db.Column(db.String(30), unique=True, nullable=True)  # For whatsapp this is a phone number, for telegram this is a chat_id
+
     approved:bool = db.Column(db.Boolean, nullable=False, default=True)
 
     api_call_count:int = db.Column(db.Integer, default=0)
