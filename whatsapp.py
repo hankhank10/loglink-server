@@ -14,7 +14,7 @@ from __main__ import User
 from __main__ import whitelist_only, message_string
 
 from __main__ import send_message
-from __main__ import onboarding_workflow
+from __main__ import onboarding_workflow, offboarding_workflow
 
 from __main__ import help_send_token_reminder, help_send_new_token, help_more_help
 
@@ -35,7 +35,8 @@ command_list = [
     "/help",
     "/token",
     "/refresh",
-    "/readme"
+    "/readme",
+    "/delete_account"
 ]
 
 
@@ -80,7 +81,6 @@ def webhook():
     if changed_field == "messages":
         new_message = whatsapp_messenger.get_mobile(data)
         if new_message:
-
 
             # Get all the details of the sender
             mobile = whatsapp_messenger.get_mobile(data)
@@ -127,6 +127,45 @@ def webhook():
                     if message_id == "more_help":
                         help_more_help(user.id, provider, mobile)
 
+                    if message_id == "delete_account":
+                        whatsapp_messenger.send_reply_button(
+                            recipient_id=mobile,
+                            button={
+                                "type": "button",
+                                "header": {
+                                    "type": "text",
+                                    "text": "! DANGER ZONE !"
+                                },
+                                "body": {
+                                    "text": "Are you sure you want to delete your account? "
+                                },
+                                "action": {
+                                    "buttons": [
+                                        {
+                                            "type": "reply",
+                                            "reply": {
+                                                "id": "confirm_delete_account",
+                                                "title": "Yes, delete account"
+                                            }
+                                        },
+                                        {
+                                            "type": "reply",
+                                            "reply": {
+                                                "id": "disregard_delete_account",
+                                                "title": "Disregard"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        )
+
+                        if message_id == "disregard_delete_account":
+                            result = send_message(provider, mobile, "Ok, I won't delete your account.")
+
+                        if message_id == "confirm_delete_account":
+                            result = offboarding_workflow(provider, mobile)
+
                     result = True
 
                 if message_type == "text":
@@ -145,7 +184,10 @@ def webhook():
                                     "text": "LogLink Help"
                                 },
                                 "body": {
-                                    "text": "Did you need some help? If not, no worries you can ignore this message."
+                                    "text": "Did you need some help? Click one of the buttons below or ignore."
+                                },
+                                "footer": {
+                                    "text": message_string['more_help']
                                 },
                                 "action": {
                                     "buttons": [
@@ -166,10 +208,10 @@ def webhook():
                                         {
                                             "type": "reply",
                                             "reply": {
-                                                "id": "more_help",
-                                                "title": "I need more help"
+                                                "id": "delete_account",
+                                                "title": "Delete my account"
                                             }
-                                        }
+                                        },
                                     ]
                                 }
                             },
