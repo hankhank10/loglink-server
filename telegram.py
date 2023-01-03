@@ -66,7 +66,8 @@ def download_file_from_telegram(
 
 def send_telegram_message(
 	telegram_chat_id,
-	message_contents
+	message_contents,
+	disable_notification=False,
 ):
 	message_contents = escape_markdown(message_contents)
 
@@ -74,6 +75,7 @@ def send_telegram_message(
 		'chat_id': telegram_chat_id,
 		'text': message_contents,
 		'parse_mode': 'MarkdownV2',
+		'disable_notification': disable_notification
 	}
 	url = telegram_api_url + '/sendMessage'
 	response = requests.post(url, json=payload)

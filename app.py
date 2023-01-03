@@ -297,7 +297,8 @@ def compose_image_message_contents(
 def send_message(
     provider,
     provider_id,
-    contents
+    contents,
+    disable_notification=False,
 ):
 
     if provider not in valid_providers:
@@ -308,7 +309,7 @@ def send_message(
         return True
 
     if provider == 'telegram':
-        telegram.send_telegram_message(provider_id, contents)
+        telegram.send_telegram_message(provider_id, contents, disable_notification)
         return True
 
     return False
@@ -345,9 +346,9 @@ def onboarding_workflow(
 
     logging.info("New user: %s", user.provider_id)
     send_message(provider, provider_id, message_string["welcome_to_loglink"])
-    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"])
-    send_message(provider, provider_id, user.token)
-    send_message(provider, provider_id, message_string["plugin_instructions"])
+    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"], disable_notification=True)
+    send_message(provider, provider_id, user.token, disable_notification=True)
+    send_message(provider, provider_id, message_string["plugin_instructions"], disable_notification=True)
     return True
 
 
