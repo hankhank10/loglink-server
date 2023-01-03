@@ -48,7 +48,9 @@ message_string = {
     "error_with_message": "This message could not be saved",
     "plugin_instructions": "You should paste this token into your plugin settings in LogSeq",
     "telegram_help_message": "You can use the following commands to seek help:\n\n/token_reminder - Send yourself a reminder of your token\n/token_refresh - Generate a new token and send it to yourself\n/more_help - Get more help \n\nThe full instructions are at " + app_uri,
-    "sorry_didnt_understand_command": "Sorry, I didn't understand that command."
+    "sorry_didnt_understand_command": "Sorry, I didn't understand that command.",
+    "delete_failed_not_in_database": "No record associated with this ID found in the database",
+    "user_deleted": "Your account and all associated messages were deleted",
 }
 
 # Valid providers
@@ -288,6 +290,38 @@ def onboarding_workflow(
     send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"])
     send_message(provider, provider_id, user.token)
     send_message(provider, provider_id, message_string["plugin_instructions"])
+    return True
+
+
+def offboarding_workflow(
+    provider,
+    provider_id
+):
+    if provider not in valid_providers:
+        return False
+
+    # Check if this provider ID is already in the database
+    user = User.query.filter_by(
+        provider=provider,
+        provider_id=provider_id
+    ).first()
+
+    if not user:
+        # User is not in the database
+        send_message(provider, provider_id, message_string["delete_failed_not_in_database"])
+        return False
+
+    # Delete all messages associated with that user
+    messages = Message.query.filter_by(
+        user_id=user.id
+    ).delete()
+    db.session.commit()
+
+    # Delete the user
+    db.session.delete(user)
+    db.session.commit()
+
+    send_message(provider, provider_id, message_string["user_deleted"])
     return True
 
 
