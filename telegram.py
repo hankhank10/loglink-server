@@ -51,11 +51,8 @@ def download_file_from_telegram(
 	print(url)
 	r = requests.get(url)
 
-	print (r)
-
 	if r.status_code == 200:
 		file_save_path = f"{media_uploads_folder}/{save_name}"
-		print (file_save_path)
 		with open(file_save_path, 'wb') as f:
 			f.write(r.content)
 
@@ -75,7 +72,7 @@ def send_telegram_message(
 	url = telegram_api_url + '/sendMessage'
 	response = requests.post(url, json=payload)
 
-	print ("Message sent to " + url + " response code was " + str(response.status_code))
+	logging.info ("Message sent to " + url + " response code was " + str(response.status_code))
 
 	if response.status_code == 200:
 		return True
@@ -87,6 +84,13 @@ def send_telegram_message(
 def telegram_webhook():
 
 	if request.method == 'POST':
+		# Check the headers
+		auth_token_received_from_webhook = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+
+		if auth_token_received_from_webhook != secretstuff.telegram_webhook_auth:
+			logging.error("Token " + auth_token_received_from_webhook + " did not match expected")
+			return "error"
+
 		# Get the message from the user
 		data = request.get_json()
 
@@ -98,7 +102,7 @@ def telegram_webhook():
 				'mobile': data['message']['from']['id'],
 			}
 		except:
-			print ("Error parsing JSON")
+			logging.error ("Error parsing JSON")
 			return "Error: Telegram message missing mandatory fields"
 
 		# Check if this is a new user
@@ -267,9 +271,6 @@ def telegram_webhook():
 					message_contents=message_received['message_contents'],
 					provider_message_id=message_received['telegram_message_id'],
 				)
-
-			else:
-				pprint.pprint (data['message'])
 
 			# If message type has not been set then return an error
 			if result:
