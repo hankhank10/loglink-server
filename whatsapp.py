@@ -5,13 +5,12 @@ import secretstuff
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 
 from __main__ import app
-from __main__ import random_token
-from __main__ import create_new_user, add_new_message, compose_location_message_contents, compose_image_message_contents
+from __main__ import add_new_message, compose_location_message_contents, compose_image_message_contents
 
 from __main__ import db
 from __main__ import User
 
-from __main__ import whitelist_only, message_string
+from __main__ import message_string
 
 from __main__ import send_message
 from __main__ import onboarding_workflow, offboarding_workflow
