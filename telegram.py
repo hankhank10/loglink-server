@@ -282,3 +282,17 @@ def telegram_webhook():
 				return "Failed to add message to database"
 
 			return "ok"
+
+
+@app.route('/telegram/webhook/health')
+def check_webhook_health():
+
+	url = f"{telegram_api_url}/getWebhookInfo"
+
+	r = requests.get(url)
+	response_json = r.json()
+
+	return {
+		'ok': response_json['ok'],
+		'pending_update_count': response_json['result']['pending_update_count']
+	}

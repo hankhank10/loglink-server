@@ -14,3 +14,4 @@ imgur_client_secret = ''
 telegram_bot_name = ""
 telegram_token = ""
 telegram_full_token = "bot"+telegram_token
+telegram_webhook_auth = ""
