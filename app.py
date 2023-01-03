@@ -6,6 +6,8 @@ import logging
 from dataclasses import dataclass
 import imgur
 
+import sentry_sdk
+
 # Import flask
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
@@ -14,6 +16,18 @@ from flask_migrate import Migrate
 # Import secrets
 import secretstuff
 import whitelist
+
+# Sentry for error logging
+from sentry_sdk.integrations.flask import FlaskIntegration
+sentry_logging = True  # Disable this if you have self deployed and don't want to send errors to Sentry
+if sentry_logging:
+    sentry_sdk.init(
+        dsn=secretstuff.sentry_dsn,
+        integrations=[
+            FlaskIntegration(),
+        ],
+        traces_sample_rate=1.0
+    )
 
 # Create the app
 app = Flask(__name__)
@@ -455,8 +469,9 @@ def get_new_messages():
 
 
 
-def check_db():
+# Debugging routes
 
+def check_db():
     return {
         'users': User.query.count(),
         'messages': {
