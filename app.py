@@ -92,6 +92,7 @@ class Message(db.Model):
         return (datetime.now() - self.timestamp).seconds / 60
 
 
+
 #################
 # HOUSEKEEPING #
 #################
