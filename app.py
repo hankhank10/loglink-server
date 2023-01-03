@@ -110,9 +110,28 @@ def delete_delivered_messages(user_id=None):
 
     for message in messages:
         db.session.delete(message)
-    db.session.commit()
+
+    try:
+        db.session.commit()
+    except:
+        return False
+    return True
 
     return True
+
+
+def delete_all_messages(user_id):
+
+    messages = Message.query.filter_by(
+        user_id=user_id
+    ).delete()
+
+    try:
+        db.session.commit()
+    except:
+        return False
+    return True
+
 
 
 def random_token(token_type=None):
@@ -315,10 +334,7 @@ def offboarding_workflow(
         return False
 
     # Delete all messages associated with that user
-    messages = Message.query.filter_by(
-        user_id=user.id
-    ).delete()
-    db.session.commit()
+    delete_all_messages(user.id)
 
     # Delete the user
     db.session.delete(user)
@@ -333,10 +349,16 @@ def help_send_new_token(
     provider,
     provider_id
 ):
+    # Check the user is found
     user = User.query.filter_by(id=user_id).first()
     if not user:
         logging.error("User not found")
         return False
+
+    # Delete all old messages
+    delete_all_messages(user.id)
+
+    # Refresh the token
     user.token = random_token(provider)
     db.session.commit()
     send_message(provider, provider_id, message_string["resetting_your_token"])
@@ -432,9 +454,31 @@ def get_new_messages():
     }), 200
 
 
-#####################
-# TELEGRAM          #
-#####################
+
+def check_db():
+
+    return {
+        'users': User.query.count(),
+        'messages': {
+            'total': Message.query.count(),
+            'delivered': Message.query.filter_by(delivered = True).count(),
+            'undelivered': Message.query.filter_by(delivered = False).count()
+        }
+    }
+
+
+@app.route('/health')
+def check_health():
+
+    telegram_health = telegram.check_webhook_health()
+
+    return {
+        'server': {
+            'ok': True
+        },
+        'database': check_db(),
+        'telegram_webhook': telegram.check_webhook_health()
+    }
 
 # Run the app
 if __name__ == "__main__":
