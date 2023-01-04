@@ -87,9 +87,15 @@ message_string = {
     "confirm_refresh_token_telegram_suffix": "^^Type /token_refresh_confirm to confirm.",
     "danger_zone": "❗ DANGER ZONE ❗",
     "cannot_upload_to_cloud": "There was a problem uploading your message to the cloud. You may need to set your imgbb API key in the settings.^^Full instructions at " + app_uri + "/image-upload",
-    "imgbb_no_argument": "To specify an imgbb API key, use the command /imgbb followed by your API key.^^Full instructions at " + app_uri + "/image-upload",
-    "imgbb_invalid_key": "I tried to send a test message to imgbb using that API key but it didn't work.^^Full instructions at " + app_uri + "/image-upload",
-    "imgbb_key_set": "Your imgbb API key has been set.^^Full instructions at " + app_uri + "/image-upload",
+    "imgbb_no_argument": "To specify an imgbb API key, use the command /imgbb followed by your API key.^^Full instructions at " + app_uri + "image-upload",
+    "imgbb_invalid_key": "I tried to send a test message to imgbb using that API key but it didn't work.^^Full instructions at " + app_uri + "image-upload",
+    "imgbb_key_set": "Your imgbb API key has been set and you should now be able to upload images. Try it out!",
+}
+
+media_urls = {
+    'toast': 'https://media.giphy.com/media/BPJmthQ3YRwD6QqcVD/giphy.gif',
+    'sad_cat': 'https://media.giphy.com/media/71PLYtZUiPRg4/giphy.gif',
+    'sad_pam': 'https://media.giphy.com/media/YLgIOmtIMUACY/giphy-downsized-large.gif'
 }
 
 # This server supports both Telegram and Whatsapp. Telegram is required, Whatsapp is optional.
@@ -406,6 +412,29 @@ def send_message(
     if provider == 'telegram':
         telegram.send_telegram_message(provider_id, contents, disable_notification)
         return True
+
+    return False
+
+
+def send_picture_message(
+    provider,
+    provider_id,
+    image_url,
+    animation=False,
+    caption=None,
+):
+
+    if provider not in valid_providers:
+        return False
+
+    if provider == 'telegram':
+        result = telegram.send_telegram_picture_message(
+            telegram_chat_id=provider_id,
+            image_url=image_url,
+            animation=animation,
+            caption=caption
+        )
+        return result
 
     return False
 

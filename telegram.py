@@ -12,13 +12,15 @@ from __main__ import User
 
 from __main__ import message_string, media_uploads_folder
 
-from __main__ import send_message
+from __main__ import send_message, send_picture_message
 from __main__ import onboarding_workflow, offboarding_workflow
 
 from __main__ import user_can_upload_to_cloud
 
 from __main__ import help_send_new_token, help_more_help
 from __main__ import app_uri
+
+from __main__ import media_urls
 
 import secretstuff
 
@@ -82,10 +84,37 @@ def send_telegram_message(
 		'disable_notification': disable_notification
 	}
 	url = telegram_api_url + '/sendMessage'
+
 	response = requests.post(url, json=payload)
-
 	logging.info ("Message sent to Telegram webhook")
+	if response.status_code == 200:
+		return True
+	else:
+		return False
 
+
+def send_telegram_picture_message(
+	telegram_chat_id,
+	image_url,
+	animation=False,
+	caption=None,
+):
+
+	payload = {
+		'chat_id': telegram_chat_id,
+	}
+	if caption:
+		payload['caption'] = caption
+
+	if animation:
+		payload['animation'] = image_url
+		url = telegram_api_url + '/sendAnimation'
+	else:
+		payload['photo'] = image_url
+		url = telegram_api_url + '/sendPhoto'
+
+	response = requests.post(url, json=payload)
+	logging.info ("Message sent to Telegram webhook")
 	if response.status_code == 200:
 		return True
 	else:
@@ -199,11 +228,23 @@ def telegram_webhook():
 									message_received['telegram_chat_id'],
 									message_string['imgbb_key_set']
 								)
+								send_picture_message(
+									provider,
+									message_received['telegram_chat_id'],
+									media_urls['toast'],
+									animation=True
+								)
 							else:
 								result = send_message(
 									provider,
 									message_received['telegram_chat_id'],
 									message_string['imgbb_invalid_key']
+								)
+								send_picture_message(
+									provider,
+									message_received['telegram_chat_id'],
+									media_urls['sad_pam'],
+									animation=True
 								)
 
 					if message_received['message_contents'] == "/delete_account_confirm":
