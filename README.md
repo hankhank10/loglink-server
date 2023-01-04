@@ -1,4 +1,6 @@
 # LogLink
+    
+** NOTE: This project is under development (as of 4 Jan 2023) and not yet available for testing. If you want to sign up for the beta you can [here](https://5agez8udocf.typeform.com/to/Mlsi9lR7) **
 
 LogLink allows you to add to your LogSeq graph more easily from a variety of sources, with a focus on mobile.
 
