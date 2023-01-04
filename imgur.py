@@ -1,4 +1,5 @@
 import os
+import logging
 from imgur_python import Imgur
 from secretstuff import imgur_client_id, imgur_client_secret
 
@@ -6,8 +7,12 @@ imgur_client = Imgur({'client_id': imgur_client_id})
 
 
 def upload_image(image_path, delete_after_upload=True):
-	image = imgur_client.image_upload(image_path, 'Untitled', 'An upload from LogLink')
-	image_id = image['response']['data']['id']
+	try:
+		image = imgur_client.image_upload(image_path, 'Untitled', 'An upload from LogLink')
+		image_id = image['response']['data']['id']
+	except Exception as e:
+		logging.error("Error uploading to imgur", str(e))
+
 
 	if image['response']['data']['link']:
 

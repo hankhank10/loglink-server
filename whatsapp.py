@@ -301,7 +301,7 @@ def webhook():
 
                     message_contents = compose_image_message_contents(
                         image_file_path=image_file_path,
-                        caption = caption
+                        caption=caption
                     )
 
                     if message_contents:
