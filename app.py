@@ -21,13 +21,14 @@ import whitelist
 from sentry_sdk.integrations.flask import FlaskIntegration
 sentry_logging = True  # Disable this if you have self deployed and don't want to send errors to Sentry
 if sentry_logging:
-    sentry_sdk.init(
-        dsn=secretstuff.sentry_dsn,
-        integrations=[
-            FlaskIntegration(),
-        ],
-        traces_sample_rate=1.0
-    )
+    if secretstuff.sentry_dsn:
+        sentry_sdk.init(
+            dsn=secretstuff.sentry_dsn,
+            integrations=[
+                FlaskIntegration(),
+            ],
+            traces_sample_rate=1.0
+        )
 
 # Create the app
 app = Flask(__name__)
