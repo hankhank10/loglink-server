@@ -199,16 +199,16 @@ def telegram_webhook():
 						provider_message_id=message_received['telegram_message_id'],
 					)
 
-			elif 'photo' in data['message'] or 'video' in data['message']:
+			elif 'photo' in data['message']:
 
 				if 'photo' in data['message']:
 					message_received['message_type'] = 'photo'
 					message_received['file_id'] = data['message']['photo'][-1]['file_id']
 
-				if 'video' in data['message']:
-					message_received['message_type'] = 'video'
-					message_received['file_id'] = data['message']['video']['file_id']
-					message_received['file_name'] = f"{secrets.token_hex(6)}{['message']['video']['file_name']}"
+				#if 'video' in data['message']:
+				#	message_received['message_type'] = 'video'
+				#	message_received['file_id'] = data['message']['video']['file_id']
+				#	message_received['file_name'] = f"{secrets.token_hex(6)}{['message']['video']['file_name']}"
 
 				# Get the caption if there is one
 				if 'caption' in data['message']:
@@ -253,7 +253,7 @@ def telegram_webhook():
 							provider_message_id=message_received['telegram_message_id']
 						)
 					else:
-						logging.error("Failed to upload image to imgur")
+						logging.error("Failed to upload image to cloud")
 				else:
 					logging.error("Error downloading file from Telegram")
 

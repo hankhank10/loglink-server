@@ -12,18 +12,17 @@ def upload_image(image_path, delete_after_upload=True):
 		image_id = image['response']['data']['id']
 	except Exception as e:
 		logging.error("Error uploading to imgur", str(e))
+		return False
 
+	print (image['response'])
 
 	if image['response']['data']['link']:
-
 		# Delete the local file
 		if delete_after_upload:
 			if os.path.exists(image_path):
 				os.remove(image_path)
 
 		return image['response']['data']['link']
-
-
 
 	else:
 		return None

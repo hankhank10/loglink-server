@@ -278,14 +278,14 @@ def webhook():
                             provider_message_id=message_id
                         )
 
-                if message_type == "image" or message_type == "video":
+                if message_type == "image":
                     message_id = whatsapp_messenger.get_message_id(data)
 
                     if message_type == "image":
                         image = whatsapp_messenger.get_image(data)
 
-                    if message_type == "video":
-                        image = whatsapp_messenger.get_video(data)
+                    #if message_type == "video":
+                    #    image = whatsapp_messenger.get_video(data)
 
                     image_id, mime_type = image["id"], image["mime_type"]
                     image_url = whatsapp_messenger.query_media_url(image_id)
@@ -320,7 +320,8 @@ def webhook():
                     "document",
                     "contacts",
                     "sticker",
-                    "unsupported"
+                    "unsupported",
+                    "video"
                 ]
                 if message_type in unsupported_message_types:
                     send_message(provider, mobile, f"Sorry, LogLink does not yet support {message_type} uploads")

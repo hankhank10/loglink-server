@@ -5,7 +5,6 @@ from datetime import datetime, time, timedelta
 import secrets
 import logging
 from dataclasses import dataclass
-import imgur
 
 import sentry_sdk
 
@@ -53,6 +52,14 @@ telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
 # Global app settings
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
 token_length = 18
+
+# Image upload services
+image_upload_service = "imgbb"
+if image_upload_service == "imgur":
+    import imgur
+if image_upload_service == "imgbb":
+    import imgbb
+
 
 # Message strings
 message_string = {
@@ -317,19 +324,23 @@ def compose_image_message_contents(
         caption=None
 ):
 
-    # Upload the image to imgur
-    imgur_result = imgur.upload_image(image_file_path)
+    # Upload the image to the cloud service
+    image_upload_result = False
+    if image_upload_service == "imgur":
+        image_upload_result = imgur.upload_image(image_file_path)
+    if image_upload_service == "imgbb":
+        image_upload_result = imgbb.upload_image(image_file_path)
 
-    if not imgur_result:
+    if not image_upload_result:
         return False
 
-    if imgur_result:
-        logging.info(f"Image uploaded to imgur at url {imgur_result}")
+    if image_upload_result:
+        logging.info(f"Image uploaded to cloud at url {image_upload_result}")
 
         if caption:
-            message_contents = f"{caption} ![{caption}]({imgur_result})"
+            message_contents = f"{caption} ![{caption}]({image_upload_result})"
         else:
-            message_contents = imgur_result
+            message_contents = image_upload_result
 
     return message_contents
 
