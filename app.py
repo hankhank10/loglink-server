@@ -73,11 +73,13 @@ message_string = {
     "danger_zone": "❗ DANGER ZONE ❗"
 }
 
-# Valid providers
-valid_providers = [
-    "whatsapp",
-    "telegram",
-]
+# This server supports both Telegram and Whatsapp. Telegram is required, Whatsapp is optional.
+valid_providers = ['telegram']
+
+use_whatsapp = True
+if use_whatsapp:
+    valid_providers.append('whatsapp')
+
 
 
 # Define the model in which the user data, tokens and messages are stored
@@ -415,8 +417,10 @@ def help_more_help(
 
 
 # Import other routes
-import whatsapp
-import telegram
+if 'telegram' in valid_providers:
+    import telegram
+if 'whatsapp' in valid_providers:
+    import whatsapp
 
 
 #####################
@@ -470,8 +474,9 @@ def get_new_messages():
 
             message_in_memory = message
             new_messages.append(message_in_memory)
-            if message.provider == "whatsapp":
-                whatsapp.mark_whatsapp_message_read(message.provider_message_id)
+            if 'whatsapp' in valid_providers:
+                if message.provider == "whatsapp":
+                    whatsapp.mark_whatsapp_message_read(message.provider_message_id)
 
     # Mark them as read and delete them from the database
     db.session.commit()
