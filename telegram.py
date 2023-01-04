@@ -82,8 +82,6 @@ def send_telegram_message(
 
 	logging.info ("Message sent to Telegram webhook")
 
-	print(response.json())
-
 	if response.status_code == 200:
 		return True
 	else:
@@ -115,23 +113,28 @@ def telegram_webhook():
 			logging.error ("Error parsing JSON")
 			return "Error: Telegram message missing mandatory fields"
 
-		# Check if this is a new user
+		# Check if this is a new user and if so run the onboarding workflow
 		user = User.query.filter_by(provider_id=message_received['telegram_chat_id']).first()
-
-		# If it is a new user, create the account and return the token
 		if not user:
+			if 'text' in data['message']:
+				new_user_message_contents = data['message']['text']
+				if new_user_message_contents.startswith('/start'):
+					beta_code_provided = new_user_message_contents[7:].strip()
 
-			onboarding_result = onboarding_workflow(
-				provider=provider,
-				provider_id=message_received['telegram_chat_id'],
-			)
+					result = onboarding_result = onboarding_workflow(
+						provider=provider,
+						provider_id=message_received['telegram_chat_id'],
+						beta_code=beta_code_provided,
+					)
+					return "done"
+				send_message(
+					provider=provider,
+					provider_id=message_received['telegram_chat_id'],
+					contents=message_string['start_with_start_please']
+				)
+				return "done"
 
-			if onboarding_result:
-				return "ok"
-			else:
-				return "error"
-
-		# If it's not a new user, process the image and add it to the database
+		# If it's not a new user, process the message and add it to the database
 		if user:
 
 			# Work out the message type and get the relevant information
@@ -141,13 +144,8 @@ def telegram_webhook():
 				message_received['message_type'] = 'text'
 				message_received['message_contents'] = data['message']['text']
 
-				# Check if this is a command
-				if message_received['message_contents'] in command_list:
-					if message_received['message_contents'] == '/start':
-						result = onboarding_result = onboarding_workflow(
-							provider=provider,
-							provider_id=message_received['telegram_chat_id'],
-						)
+				# Check if this is a command (other than /start, which is handled above)
+				if message_received['message_contents'].startswith('/'):
 
 					if message_received['message_contents'] == '/help':
 						result = send_message(

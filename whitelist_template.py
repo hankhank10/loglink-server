@@ -1,3 +1,3 @@
-acceptable_numbers = [
+acceptable_whatsapp_numbers = [
 	''
 ]

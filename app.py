@@ -1,3 +1,4 @@
+import os, glob
 import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime, time, timedelta
@@ -45,15 +46,17 @@ migrate = Migrate(app, db)
 app_uri = "https://loglink.it/"
 security_disclaimer_api = f"{app_uri}docs/important-notice"
 media_uploads_folder = "media_uploads"
+beta_codes_folder = "beta_codes"
 
 # Global app settings
-whitelist_only = True
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
 token_length = 18
 
 # Message strings
 message_string = {
     "problem_creating_user_generic": "There was a problem creating your account.",
+    "start_with_start_please": "Please type /start followed by your beta code to get started.",
+    "beta_code_not_found": "LogLink is currently in beta and as such to sign up you must start the bot with the command /start followed by your beta code. You either didn't provide a code or it wasn't recognised.^^You can apply for a beta code at "+app_uri,
     "problem_creating_user_whitelist": "There was a problem creating your account. This may be because your mobile number is not on the whitelist.",
     "welcome_to_loglink": f"Welcome to LogLink. By continuing to use LogLink you are confirming that you have read and understood the really important security and service message here ({security_disclaimer_api}), that you accept the risks, accept that the creator(s) accept no liability and confirm that it is suitable for your use case.",
     "token_will_be_sent_in_next_message": "Your token will be sent in the next message (for easy copying). Do not share this token with anyone else.",
@@ -76,9 +79,14 @@ message_string = {
 # This server supports both Telegram and Whatsapp. Telegram is required, Whatsapp is optional.
 valid_providers = ['telegram']
 
+# Telegram settings
+telegram_require_beta_code = True
+
+# Whatsapp settings
 use_whatsapp = True
 if use_whatsapp:
     valid_providers.append('whatsapp')
+whatsapp_whitelist_only = True
 
 
 
@@ -116,10 +124,26 @@ class Message(db.Model):
         return (datetime.now() - self.timestamp).seconds / 60
 
 
-#################
+################
 # HOUSEKEEPING #
-#################
+################
 
+
+def list_of_beta_codes():
+    list_of_codes = []
+    for file in glob.glob(f"{beta_codes_folder}/*.txt"):
+        filename = file.replace(".txt", "")
+        filename = filename.replace(f"{beta_codes_folder}/", "")
+        list_of_codes.append(filename)
+    return list_of_codes
+
+
+def use_beta_code(beta_code):
+    if beta_code in list_of_beta_codes():
+        os.remove(f"{beta_codes_folder}/{beta_code}.txt")
+        return True
+    else:
+        return False
 
 
 def escape_markdown(text, carriage_return_only = False):
@@ -137,7 +161,6 @@ def escape_markdown(text, carriage_return_only = False):
             text = text.replace(char, f"\\{char}")
 
     text = text.replace("^", "\n")
-
     return text
 
 
@@ -184,16 +207,28 @@ def random_token(token_type=None):
 def create_new_user(
     provider,
     provider_id,
-    approved=True
+    approved=True,
+    beta_code=None
 ):
 
     if provider not in valid_providers:
         return False
 
-    # If whitelist only, check if the phone number is in the whitelist
-    if whitelist_only:
-        if provider == "whatsapp":
-            if provider_id not in whitelist.acceptable_numbers:
+    if provider == 'whatsapp':
+        if whatsapp_whitelist_only:
+            if provider_id not in whitelist.acceptable_whatsapp_numbers:
+                return False
+
+    if provider == 'telegram':
+        if telegram_require_beta_code:
+            beta_code_ok = use_beta_code(beta_code)
+            print ("Is beta code", beta_code, "ok?", beta_code_ok)
+            if not beta_code_ok:
+                send_message(
+                    provider=provider,
+                    provider_id=provider_id,
+                    contents=message_string["beta_code_not_found"]
+                )
                 return False
 
     new_user = User(
@@ -320,7 +355,8 @@ def send_message(
 
 def onboarding_workflow(
     provider,
-    provider_id
+    provider_id,
+    beta_code=None,
 ):
 
     if provider not in valid_providers:
@@ -332,19 +368,19 @@ def onboarding_workflow(
         provider_id=provider_id
     ).first()
 
+    print ("Onboarding workflow got the beta code", beta_code)
+
     if not user:
         # Create a new user
         user = create_new_user(
             provider=provider,
-            provider_id=provider_id
+            provider_id=provider_id,
+            beta_code=beta_code
         )
 
     if not user:
         logging.error("Failed to create new user")
-        if whitelist_only:
-            send_message(provider, provider_id, message_string["problem_creating_user"])
-        else:
-            send_message(provider, provider_id, message_string["problem_creating_user_generic"])
+        send_message(provider, provider_id, message_string["problem_creating_user_generic"])
         return False
 
     logging.info("New user: %s", user.provider_id)
@@ -511,8 +547,15 @@ def check_db():
     }
 
 
-@app.route('/health')
+@app.route('/admin/health')
 def check_health():
+
+    admin_password = request.headers.get('admin-password')
+    if admin_password != secretstuff.admin_password:
+        return {
+            "status": "error",
+            "message": "Invalid admin password"
+        }, 400
 
     telegram_health = telegram.check_webhook_health()
 
@@ -523,6 +566,34 @@ def check_health():
         'database': check_db(),
         'telegram_webhook': telegram.check_webhook_health()
     }
+
+
+@app.route('/admin/beta_codes', methods=['GET', 'POST'])
+def create_new_beta_codes():
+
+    admin_password = request.headers.get('admin-password')
+    if admin_password != secretstuff.admin_password:
+        return {
+            "status": "error",
+            "message": "Invalid admin password"
+        }, 400
+
+    if request.method == 'POST':
+        number_of_codes = request.json.get('number_of_codes')
+
+        list_of_codes = []
+        for i in range(number_of_codes):
+            new_code = secrets.token_hex(5)
+            open (f"{beta_codes_folder}/{new_code}.txt", "w").close()
+            list_of_codes.append(new_code)
+
+        return {
+            "status": "success",
+            "codes_added": list_of_codes
+        }
+
+    if request.method == 'GET':
+        return list_of_beta_codes()
 
 
 # Run the app
