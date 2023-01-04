@@ -15,10 +15,14 @@ from __main__ import message_string, media_uploads_folder
 from __main__ import send_message
 from __main__ import onboarding_workflow, offboarding_workflow
 
+from __main__ import user_can_upload_to_cloud
+
 from __main__ import help_send_new_token, help_more_help
 from __main__ import app_uri
 
 import secretstuff
+
+import imgbb
 
 from __main__ import escape_markdown
 
@@ -147,32 +151,60 @@ def telegram_webhook():
 				# Check if this is a command (other than /start, which is handled above)
 				if message_received['message_contents'].startswith('/'):
 
-					if message_received['message_contents'] == '/help':
+					# Split the command into the base command (eg /help) and any argument (eg /help more)
+					command_contents = message_received['message_contents'].split(" ")
+					command = str(command_contents[0]).lower()
+					argument = str(command_contents[1]).lower() if len(command_contents) > 1 else None
+
+					if command == '/help':
 						result = send_message(
 							provider,
 							message_received['telegram_chat_id'],
 							message_string['telegram_help_message']
 						)
 
-					if message_received['message_contents'] == '/token_refresh':
+					if command == '/token_refresh':
 						result = send_message(
 							provider,
 							message_received['telegram_chat_id'],
 							f"{message_string['danger_zone']}^^{message_string['confirm_refresh_token']}{message_string['confirm_refresh_token_telegram_suffix']}"
 						)
 
-					if message_received['message_contents'] == '/token_refresh_confirm':
+					if command == '/token_refresh_confirm':
 						result = help_send_new_token(user.id, provider, message_received['telegram_chat_id'])
 
-					if message_received['message_contents'] == "/more_help":
+					if command == "/more_help":
 						result = help_more_help(user.id, provider, message_received['telegram_chat_id'])
 
-					if message_received['message_contents'] == "/delete_account":
+					if command == "/delete_account":
 						result = send_message(
 							provider,
 							message_received['telegram_chat_id'],
 							f"{message_string['danger_zone']}^^{message_string['confirm_delete_account']}{message_string['confirm_delete_account_telegram_suffix']}"
 						)
+
+					if command == "/imgbb":
+						if not argument:
+							result = send_message(
+								provider,
+								message_received['telegram_chat_id'],
+								message_string['imgbb_no_argument']
+							)
+						if argument:
+							if imgbb.api_key_valid(argument):
+								user.imgbb_api_key = argument
+								db.session.commit()
+								result = send_message(
+									provider,
+									message_received['telegram_chat_id'],
+									message_string['imgbb_key_set']
+								)
+							else:
+								result = send_message(
+									provider,
+									message_received['telegram_chat_id'],
+									message_string['imgbb_invalid_key']
+								)
 
 					if message_received['message_contents'] == "/delete_account_confirm":
 						result = offboarding_workflow(provider, message_received['telegram_chat_id'])
@@ -223,37 +255,46 @@ def telegram_webhook():
 				message_received['file_path'] = r.json()['result']['file_path']
 
 				# Download the file from Telegram
-
 				download_result = False
 				if message_received['message_type'] == 'photo':
 					download_result = download_file_from_telegram(
 						file_path=message_received['file_path'],
 						extension="jpg",
 					)
-				if message_received['message_type'] == 'video':
-					download_result = download_file_from_telegram(
-						file_path=message_received['file_path'],
-						save_name=message_received['file_name'],
-					)
+				#if message_received['message_type'] == 'video':
+				#	download_result = download_file_from_telegram(
+				#		file_path=message_received['file_path'],
+				#		save_name=message_received['file_name'],
+				#	)
 
 				if download_result:
 					message_received['local_file_name'] = download_result
 					message_received['local_file_path'] = f"{media_uploads_folder}/{download_result}"
 
-					# Add the message to the database
-					message_received['message_contents'] = compose_image_message_contents(
-						image_file_path=message_received['local_file_path'],
-						caption=message_received['caption']
-					)
-					if message_received['message_contents']:
-						result = add_new_message(
-							user_id=user.id,
-							provider=provider,
-							message_contents=message_received['message_contents'],
-							provider_message_id=message_received['telegram_message_id']
+					# Check the user can upload this type of file
+					if user_can_upload_to_cloud(user.id):
+						# Add the message to the database
+						message_received['message_contents'] = compose_image_message_contents(
+							image_file_path=message_received['local_file_path'],
+							imgbb_api_key=user.imgbb_api_key,
+							caption=message_received['caption']
 						)
+						if message_received['message_contents']:
+							result = add_new_message(
+								user_id=user.id,
+								provider=provider,
+								message_contents=message_received['message_contents'],
+								provider_message_id=message_received['telegram_message_id']
+							)
+						else:
+							logging.error("Failed to upload image to cloud")
 					else:
-						logging.error("Failed to upload image to cloud")
+						logging.error("User cannot upload to cloud")
+						result = send_message(
+							provider,
+							message_received['telegram_chat_id'],
+							message_string['cannot_upload_to_cloud']
+						)
 				else:
 					logging.error("Error downloading file from Telegram")
 

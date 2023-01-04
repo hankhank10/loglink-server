@@ -52,6 +52,7 @@ telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
 # Global app settings
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
 token_length = 18
+creating_db = False
 
 # Image upload services
 image_upload_service = "imgbb"
@@ -59,6 +60,8 @@ if image_upload_service == "imgur":
     import imgur
 if image_upload_service == "imgbb":
     import imgbb
+
+require_user_to_have_own_cloud_account = True
 
 
 # Message strings
@@ -82,7 +85,11 @@ message_string = {
     "confirm_delete_account_telegram_suffix": "^^Type /delete_account_confirm to confirm.",
     "confirm_refresh_token": "Are you sure you want to refrsh your token? This will delete all messages associated with your account.",
     "confirm_refresh_token_telegram_suffix": "^^Type /token_refresh_confirm to confirm.",
-    "danger_zone": "❗ DANGER ZONE ❗"
+    "danger_zone": "❗ DANGER ZONE ❗",
+    "cannot_upload_to_cloud": "There was a problem uploading your message to the cloud. You may need to set your imgbb API key in the settings.^^Full instructions at " + app_uri + "/image-upload",
+    "imgbb_no_argument": "To specify an imgbb API key, use the command /imgbb followed by your API key.^^Full instructions at " + app_uri + "/image-upload",
+    "imgbb_invalid_key": "I tried to send a test message to imgbb using that API key but it didn't work.^^Full instructions at " + app_uri + "/image-upload",
+    "imgbb_key_set": "Your imgbb API key has been set.^^Full instructions at " + app_uri + "/image-upload",
 }
 
 # This server supports both Telegram and Whatsapp. Telegram is required, Whatsapp is optional.
@@ -111,7 +118,7 @@ class User(db.Model):
 
     approved:bool = db.Column(db.Boolean, nullable=False, default=True)
 
-    imgbb_token:str = db.Column(db.String(80), nullable=True)
+    imgbb_api_key:str = db.Column(db.String(80), nullable=True)
 
     api_call_count:int = db.Column(db.Integer, default=0)
 
@@ -210,6 +217,16 @@ def random_token(token_type=None):
     if token_type == "telegram":
         return "telegram"+secrets.token_hex(token_length)
     return "unknown"+secrets.token_hex(token_length)
+
+
+def user_can_upload_to_cloud(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return False
+    if user.imgbb_api_key:
+        return True
+    else:
+        return False
 
 
 def create_new_user(
@@ -318,16 +335,21 @@ def compose_location_message_contents(
 
 
 def compose_image_message_contents(
-        image_file_path,
-        caption=None
+    image_file_path,
+    imgbb_api_key=None,
+    caption=None
 ):
+
+    # If we require the user to have their own cloud account, check whether they have one
+    if require_user_to_have_own_cloud_account:
+        if not imgbb_api_key:
+            logging.error("No imgbb API key provided")
+            return False
 
     # Upload the image to the cloud service
     image_upload_result = False
-    if image_upload_service == "imgur":
-        image_upload_result = imgur.upload_image(image_file_path)
-    if image_upload_service == "imgbb":
-        image_upload_result = imgbb.upload_image(image_file_path)
+
+    image_upload_result = imgbb.upload_image(image_file_path)
 
     if not image_upload_result:
         return False
@@ -341,6 +363,30 @@ def compose_image_message_contents(
             message_contents = image_upload_result
 
     return message_contents
+
+
+def set_user_imgbb_api_key(user_id, imgbb_api_key):
+
+    # Check that we are even using imgbb for cloud image storage
+    if image_upload_service != "imgbb":
+        return False
+
+    # Check that the user exists
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return False
+
+    # Check the token is valid
+    if not imgbb.api_key_valid(imgbb_api_key):
+        return False
+
+    # Set the user's imgbb api key
+    user.imgbb_api_key = imgbb_api_key
+    try:
+        db.session.commit()
+    except:
+        return False
+    return True
 
 
 def send_message(
@@ -378,8 +424,6 @@ def onboarding_workflow(
         provider=provider,
         provider_id=provider_id
     ).first()
-
-    print ("Onboarding workflow got the beta code", beta_code)
 
     if not user:
         # Create a new user
@@ -464,10 +508,11 @@ def help_more_help(
 
 
 # Import other routes
-if 'telegram' in valid_providers:
-    import telegram
-if 'whatsapp' in valid_providers:
-    import whatsapp
+if not creating_db:
+    if 'telegram' in valid_providers:
+        import telegram
+    if 'whatsapp' in valid_providers:
+        import whatsapp
 
 
 #####################
