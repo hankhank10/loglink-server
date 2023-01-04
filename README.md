@@ -12,10 +12,10 @@ https://user-images.githubusercontent.com/25515609/209876700-e77ef220-0504-4bd1-
 ## Integrations
 
 Functioning integrations:
-- WhatsApp (beta)
+- Telegram
+- WhatsApp (invite only at the moment)
 
 Planned integrations:
-- Telegram
 - Email
 - Discord (maybe)
 - Slack (maybe)
