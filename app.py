@@ -44,9 +44,11 @@ migrate = Migrate(app, db)
 
 # Define global paths and uris
 app_uri = "https://loglink.it/"
-security_disclaimer_api = f"{app_uri}docs/important-notice"
+security_disclaimer_api = f"{app_uri}/security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
+telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
+
 
 # Global app settings
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
@@ -579,6 +581,10 @@ def create_new_beta_codes():
         }, 400
 
     if request.method == 'POST':
+
+        # Check that we have been sent JSON
+        telegram_beta_link_uri = f"{telegram_invite_link_uri}?start="
+
         number_of_codes = request.json.get('number_of_codes')
 
         list_of_codes = []
