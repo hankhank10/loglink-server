@@ -92,7 +92,7 @@ valid_providers = ['telegram']
 telegram_require_beta_code = True
 
 # Whatsapp settings
-use_whatsapp = True
+use_whatsapp = False
 if use_whatsapp:
     valid_providers.append('whatsapp')
 whatsapp_whitelist_only = True
@@ -110,6 +110,8 @@ class User(db.Model):
     provider_id:str = db.Column(db.String(30), unique=True, nullable=True)  # For whatsapp this is a phone number, for telegram this is a chat_id
 
     approved:bool = db.Column(db.Boolean, nullable=False, default=True)
+
+    imgbb_token:str = db.Column(db.String(80), nullable=True)
 
     api_call_count:int = db.Column(db.Integer, default=0)
 
@@ -156,7 +158,6 @@ def use_beta_code(beta_code):
 
 
 def escape_markdown(text, carriage_return_only = False):
-
     if not carriage_return_only:
         char_list = [
             "_",
@@ -192,7 +193,6 @@ def delete_delivered_messages(user_id=None):
 
 
 def delete_all_messages(user_id):
-
     messages = Message.query.filter_by(
         user_id=user_id
     ).delete()
@@ -202,7 +202,6 @@ def delete_all_messages(user_id):
     except:
         return False
     return True
-
 
 
 def random_token(token_type=None):
@@ -231,7 +230,6 @@ def create_new_user(
     if provider == 'telegram':
         if telegram_require_beta_code:
             beta_code_ok = use_beta_code(beta_code)
-            print ("Is beta code", beta_code, "ok?", beta_code_ok)
             if not beta_code_ok:
                 send_message(
                     provider=provider,
