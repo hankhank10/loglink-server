@@ -87,6 +87,7 @@ def send_telegram_message(
 
 	response = requests.post(url, json=payload)
 	logging.info ("Message sent to Telegram webhook")
+
 	if response.status_code == 200:
 		return True
 	else:

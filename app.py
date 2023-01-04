@@ -177,7 +177,8 @@ def escape_markdown(text, carriage_return_only = False):
             "-",
             ".",
             "(",
-            ")"
+            ")",
+            "!"
         ]
 
         for char in char_list:
