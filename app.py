@@ -77,7 +77,7 @@ message_string = {
     "more_help": f"Please visit {app_uri} for more assistance",
     "error_with_message": "This message could not be saved",
     "plugin_instructions": "You should paste this token into your plugin settings in LogSeq.",
-    "telegram_help_message": "*LogLink Help Menu*^^You can use the following commands to seek help:^^^/imgbb: Connect LogLink with your imgBB account to allow image uploads^/token_refresh: Generate a new token and send it to yourself^/delete_account: Delete your account^^The full instructions are at " + app_uri + "",
+    "telegram_help_message": "*LogLink Help Menu*^^You can use the following commands to seek help:^^/imgbb: Connect LogLink with your imgBB account to allow image uploads^/token_refresh: Generate a new token and send it to yourself^/delete_account: Delete your account^^The full instructions are at " + app_uri + "",
     "sorry_didnt_understand_command": "Sorry, I didn't understand that command.",
     "delete_failed_not_in_database": "No record associated with this ID found in the database",
     "user_deleted": "Your account and all associated messages were deleted. If you want to use the service again, send another message.",
