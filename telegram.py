@@ -136,6 +136,11 @@ def telegram_webhook():
 		# Get the message from the user
 		data = request.get_json()
 
+		# Check if this update contains a message, and if not ignore it
+		if 'message' not in data:
+			logging.info("There is no message in the data received")
+			return "nothing to do"
+
 		# Start putting the mandatory fields into the message_received dictionary, return an error if there's a problem
 		try:
 			message_received = {
