@@ -71,7 +71,10 @@ def webhook():
             response.mimetype = "text/plain"
             return response
         logging.error("Webhook Verification failed")
-        return "Invalid verification token"
+        return {
+            'status': 'error',
+            'message': 'Webhook Verification failed'
+        }, 401
 
     data = request.get_json()
     # logging.info("Received webhook data: %s", data)

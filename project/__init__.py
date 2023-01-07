@@ -708,7 +708,7 @@ def create_new_beta_codes():
         return {
             "status": "error",
             "message": "Invalid admin password"
-        }, 400
+        }, 401
 
     if request.method == 'POST':
 

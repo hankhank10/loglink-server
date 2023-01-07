@@ -135,11 +135,17 @@ def telegram_webhook():
 
 		if not auth_token_received_from_webhook:
 			logging.error ("No auth token received from Telegram webhook")
-			return "No auth token received from Telegram webhook"
+			return {
+				'status': 'error',
+				'message': 'No webhook verification token received'
+			}, 401
 
 		if auth_token_received_from_webhook != secretstuff.telegram_webhook_auth:
 			logging.error("Token " + auth_token_received_from_webhook + " did not match expected")
-			return "error"
+			return {
+				'status': 'error',
+				'message': 'Webhook verification token did not match expected'
+			}, 401
 
 		# Get the message from the user
 		data = request.get_json()
