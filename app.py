@@ -47,6 +47,7 @@ security_disclaimer_api = f"{app_uri}/security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
 telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
+latest_plugin_version = "0.1.7"
 
 
 # Global app settings
@@ -151,6 +152,15 @@ class Message(db.Model):
 ################
 # HOUSEKEEPING #
 ################
+
+def calculate_version_number(version):
+    version = str(version)
+    version = version.replace("v", "")
+    major_version = version.split(".")[0]
+    minor_version = version.split(".")[1]
+    patch_version = version.split(".")[2]
+    version = int(major_version) * 10000 + int(minor_version) * 100 + int(patch_version)
+    return version
 
 
 def list_of_beta_codes():
@@ -604,6 +614,18 @@ def get_new_messages():
     db.session.commit()
     if delete_immediately:
         delete_delivered_messages(user.id)
+
+    # Check whether a version number was sent
+    plugin_version = posted_json.get('plugin_version')
+    if plugin_version:
+        print ("Plugin version: " + plugin_version + " vs latest " + latest_plugin_version)
+        cumulative_plugin_version = calculate_version_number(plugin_version)
+        cumulative_latest_plugin_version = calculate_version_number(latest_plugin_version)
+        if cumulative_plugin_version < cumulative_latest_plugin_version:
+            logging.info ('Old version detected: ' + str(cumulative_plugin_version) + ' < ' + str(cumulative_latest_plugin_version))
+            new_messages.append({
+                'contents': "FYI, your LogLink plugin is out of date. Please update to the latest version using the marketplace."
+            })
 
     return jsonify({
         'status': 'success',
