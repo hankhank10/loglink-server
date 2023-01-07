@@ -129,6 +129,10 @@ def telegram_webhook():
 		# Check the headers
 		auth_token_received_from_webhook = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
 
+		if not auth_token_received_from_webhook:
+			logging.error ("No auth token received from Telegram webhook")
+			return "No auth token received from Telegram webhook"
+
 		if auth_token_received_from_webhook != secretstuff.telegram_webhook_auth:
 			logging.error("Token " + auth_token_received_from_webhook + " did not match expected")
 			return "error"
