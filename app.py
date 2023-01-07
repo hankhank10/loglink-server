@@ -91,6 +91,8 @@ message_string = {
     "imgbb_no_argument": "To specify an imgbb API key, use the command /imgbb followed by your API key.^^Full instructions at " + app_uri + "image-upload",
     "imgbb_invalid_key": "I tried to send a test message to imgbb using that API key but it didn't work.^^Full instructions at " + app_uri + "image-upload",
     "imgbb_key_set": "Your imgbb API key has been set and you should now be able to upload images. Try it out!",
+    "new_version_available": f"FYI, a new version of the LogLink plugin is available. Please update via the marketplace.",
+    "new_version_available_desktop": f"FYI, a new version of the LogLink plugin is available for Logseq Desktop. Please update via the marketplace on your desktop.",
 }
 
 media_urls = {
@@ -624,8 +626,14 @@ def get_new_messages():
         if cumulative_plugin_version < cumulative_latest_plugin_version:
             logging.info ('Old version detected: ' + str(cumulative_plugin_version) + ' < ' + str(cumulative_latest_plugin_version))
             new_messages.append({
-                'contents': "FYI, your LogLink plugin is out of date. Please update to the latest version using the marketplace."
+                'contents': message_string['new_version_available'],
             })
+            send_message(
+                user.provider,
+                user.provider_id,
+                message_string['new_version_available_desktop'],
+                True
+            )
 
     return jsonify({
         'status': 'success',
