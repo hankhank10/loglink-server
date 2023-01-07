@@ -47,6 +47,7 @@ security_disclaimer_api = f"{app_uri}/security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
 telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
+latest_plugin_version = "0.0.0"
 
 # Global app settings
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
@@ -630,6 +631,7 @@ def get_new_messages():
 
     # Check whether a version number was sent
     plugin_version = posted_json.get('plugin_version')
+    logging.info(f"User version is {plugin_version}, latest found on github is {latest_plugin_version}")
     if plugin_version:
         print ("Plugin version: " + plugin_version + " vs latest " + latest_plugin_version)
         cumulative_plugin_version = calculate_version_number(plugin_version)
@@ -730,13 +732,9 @@ def create_new_beta_codes():
         return list_of_beta_codes()
 
 
-def initialise():
-    print ("Initialising...")
-    latest_plugin_version = get_latest_plugin_version()
-    print ("Latest plugin version: " + latest_plugin_version)
-
-
 # Run the app
 if __name__ == "__main__":
-    initialise()
+    print ("Initialising!")
+    latest_plugin_version = get_latest_plugin_version()
+    print ("Latest plugin version: " + latest_plugin_version)
     app.run(host='0.0.0.0', port=5010, debug=True)
