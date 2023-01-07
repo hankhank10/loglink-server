@@ -47,8 +47,6 @@ security_disclaimer_api = f"{app_uri}/security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
 telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
-latest_plugin_version = "0.1.7"
-
 
 # Global app settings
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
@@ -163,6 +161,19 @@ def calculate_version_number(version):
     patch_version = version.split(".")[2]
     version = int(major_version) * 10000 + int(minor_version) * 100 + int(patch_version)
     return version
+
+
+def get_latest_plugin_version():
+    url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
+    response = requests.get(url)
+    if response.status_code == 200:
+        response = response.json()
+        version = response['tag_name']
+        logging.info (f"Latest plugin version is {version}")
+        return version
+    else:
+        logging.error (f"Error getting latest plugin version: {response.status_code}")
+        return "0.0.0"
 
 
 def list_of_beta_codes():
@@ -623,17 +634,20 @@ def get_new_messages():
         print ("Plugin version: " + plugin_version + " vs latest " + latest_plugin_version)
         cumulative_plugin_version = calculate_version_number(plugin_version)
         cumulative_latest_plugin_version = calculate_version_number(latest_plugin_version)
-        if cumulative_plugin_version < cumulative_latest_plugin_version:
-            logging.info ('Old version detected: ' + str(cumulative_plugin_version) + ' < ' + str(cumulative_latest_plugin_version))
-            new_messages.append({
-                'contents': message_string['new_version_available'],
-            })
-            send_message(
-                user.provider,
-                user.provider_id,
-                message_string['new_version_available_desktop'],
-                True
-            )
+        try:
+            if cumulative_plugin_version < cumulative_latest_plugin_version:
+                logging.info ('Old version detected: ' + str(cumulative_plugin_version) + ' < ' + str(cumulative_latest_plugin_version))
+                new_messages.append({
+                    'contents': message_string['new_version_available'],
+                })
+                send_message(
+                    user.provider,
+                    user.provider_id,
+                    message_string['new_version_available_desktop'],
+                    True
+                )
+        except:
+            logging.error('Error comparing version numbers')
 
     return jsonify({
         'status': 'success',
@@ -716,6 +730,13 @@ def create_new_beta_codes():
         return list_of_beta_codes()
 
 
+def initialise():
+    print ("Initialising...")
+    latest_plugin_version = get_latest_plugin_version()
+    print ("Latest plugin version: " + latest_plugin_version)
+
+
 # Run the app
 if __name__ == "__main__":
+    initialise()
     app.run(host='0.0.0.0', port=5010, debug=True)
