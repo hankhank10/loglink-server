@@ -384,7 +384,6 @@ def telegram_webhook():
 			return "ok"
 
 
-@app.route('/telegram/webhook/health')
 def check_webhook_health():
 
 	url = f"{telegram_api_url}/getWebhookInfo"
