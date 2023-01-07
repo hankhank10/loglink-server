@@ -14,8 +14,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 # Import secrets
-import secretstuff
-import whitelist
+from . import secretstuff
+from . import whitelist
 
 # Sentry for error logging
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -57,9 +57,9 @@ creating_db = False
 # Image upload services
 image_upload_service = "imgbb"
 if image_upload_service == "imgur":
-    import imgur
+    from . import imgur
 if image_upload_service == "imgbb":
-    import imgbb
+    from . import imgbb
 
 require_user_to_have_own_cloud_account = True
 
@@ -564,9 +564,9 @@ def help_more_help(
 # Import other routes
 if not creating_db:
     if 'telegram' in valid_providers:
-        import telegram
+        from . import telegram
     if 'whatsapp' in valid_providers:
-        import whatsapp
+        from . import whatsapp
 
 
 #####################
@@ -732,9 +732,4 @@ def create_new_beta_codes():
         return list_of_beta_codes()
 
 
-# Run the app
-if __name__ == "__main__":
-    print ("Initialising!")
-    latest_plugin_version = get_latest_plugin_version()
-    print ("Latest plugin version: " + latest_plugin_version)
-    app.run(host='0.0.0.0', port=5010, debug=True)
+#

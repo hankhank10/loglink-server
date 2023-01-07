@@ -1,4 +1,4 @@
-from secretstuff import imgbb_api_key
+from . import secretstuff
 import requests
 from pprint import pprint
 import logging
@@ -14,7 +14,7 @@ def upload_image(
 
 	# If no token provided then use the default one
 	if not user_api_token:
-		user_api_token = imgbb_api_key
+		user_api_token = secretstuff.imgbb_api_key
 
 	# Put together the request
 	payload = {

@@ -5,29 +5,29 @@ import pprint
 import pprint # for debug
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 
-from __main__ import app
-from __main__ import add_new_message, compose_location_message_contents, compose_image_message_contents
+from . import app
+from . import add_new_message, compose_location_message_contents, compose_image_message_contents
 
-from __main__ import db
-from __main__ import User
+from . import db
+from . import User
 
-from __main__ import message_string, media_uploads_folder
+from . import message_string, media_uploads_folder
 
-from __main__ import send_message, send_picture_message
-from __main__ import onboarding_workflow, offboarding_workflow
+from . import send_message, send_picture_message
+from . import onboarding_workflow, offboarding_workflow
 
-from __main__ import user_can_upload_to_cloud
+from . import user_can_upload_to_cloud
 
-from __main__ import help_send_new_token, help_more_help
-from __main__ import app_uri
+from . import help_send_new_token, help_more_help
+from . import app_uri
 
-from __main__ import media_urls
+from . import media_urls
 
-import secretstuff
+from . import secretstuff
 
-import imgbb
+from . import imgbb
 
-from __main__ import escape_markdown
+from . import escape_markdown
 
 
 telegram_base_api_url = 'https://api.telegram.org'
@@ -403,3 +403,5 @@ def check_webhook_health():
 		'ok': response_json['ok'],
 		'pending_update_count': response_json['result']['pending_update_count']
 	}
+
+print ("Telegram imported")
