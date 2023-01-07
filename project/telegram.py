@@ -410,4 +410,3 @@ def check_webhook_health():
 		'pending_update_count': response_json['result']['pending_update_count']
 	}
 
-print ("Telegram imported")
