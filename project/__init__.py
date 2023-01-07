@@ -47,7 +47,9 @@ security_disclaimer_api = f"{app_uri}/security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
 telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
+
 latest_plugin_version = "0.0.0"
+latest_plugin_version_last_checked = datetime.now()
 
 # Global app settings
 delete_immediately = True  # This setting means messages are deleted immediately after they are delivered - keep on in production, but maybe turn off for testing
@@ -166,11 +168,12 @@ def calculate_version_number(version):
 
 def get_latest_plugin_version():
     url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
+    logging.error("Getting latest plugin version from Github API")
     response = requests.get(url)
     if response.status_code == 200:
         response = response.json()
         version = response['tag_name']
-        logging.info (f"Latest plugin version is {version}")
+        logging.error (f"Latest plugin version is {version}")
         return version
     else:
         logging.error (f"Error getting latest plugin version: {response.status_code}")
@@ -629,7 +632,14 @@ def get_new_messages():
     if delete_immediately:
         delete_delivered_messages(user.id)
 
-    # Check whether a version number was sent
+    # Version checking
+    # Check whether we have already checked the latest version
+    global latest_plugin_version
+    if latest_plugin_version == "0.0.0" \
+            or latest_plugin_version_last_checked < (datetime.now() - timedelta(hours=1)):
+        latest_plugin_version = get_latest_plugin_version()
+
+    # Check if a version number was sent
     plugin_version = posted_json.get('plugin_version')
     logging.info(f"User version is {plugin_version}, latest found on github is {latest_plugin_version}")
     if plugin_version:
@@ -731,5 +741,3 @@ def create_new_beta_codes():
     if request.method == 'GET':
         return list_of_beta_codes()
 
-
-#
