@@ -1,7 +1,7 @@
 import logging
 import secrets
 import requests
-import secretstuff
+import envars
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 
 from __main__ import app
@@ -20,8 +20,8 @@ from __main__ import help_send_new_token, help_more_help
 # Set up Heyoo for WhatsApp API
 from heyoo import WhatsApp
 whatsapp_messenger = WhatsApp(
-    token=secretstuff.whatsapp_token,
-    phone_number_id=secretstuff.whatsapp_phone_number_id
+    token=envars.whatsapp_token,
+    phone_number_id=envars.whatsapp_phone_number_id
 )
 
 provider = 'whatsapp'
@@ -46,13 +46,13 @@ command_list = [
 
 # Whatsapp APIs addresses for calls outside Heyoo (at the moment only setting read receipts)
 whatsapp_api_base_uri = "https://graph.facebook.com/v15.0/"
-whatsapp_api_messages_uri = whatsapp_api_base_uri + secretstuff.whatsapp_phone_number_id + "/messages"
+whatsapp_api_messages_uri = whatsapp_api_base_uri + envars.whatsapp_phone_number_id + "/messages"
 
 
 def mark_whatsapp_message_read(message_id):
     r = requests.post(
         url = whatsapp_api_messages_uri,
-        headers = {"Authorization": "Bearer " + secretstuff.whatsapp_token},
+        headers = {"Authorization": "Bearer " + envars.whatsapp_token},
         json = {
             "messaging_product": "whatsapp",
             "message_id": message_id,
@@ -65,7 +65,7 @@ def mark_whatsapp_message_read(message_id):
 @app.route('/whatsapp/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == "GET":
-        if request.args.get("hub.verify_token") == secretstuff.whatsapp_verify_token:
+        if request.args.get("hub.verify_token") == envars.whatsapp_verify_token:
             logging.info("Verified webhook")
             response = make_response(request.args.get("hub.challenge"), 200)
             response.mimetype = "text/plain"
