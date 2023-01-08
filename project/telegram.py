@@ -23,7 +23,7 @@ from . import app_uri
 
 from . import media_urls
 
-from . import secretstuff
+from . import envars
 
 from . import imgbb
 
@@ -31,7 +31,7 @@ from . import escape_markdown
 
 
 telegram_base_api_url = 'https://api.telegram.org'
-telegram_api_url = f"{telegram_base_api_url}/{secretstuff.telegram_full_token}"
+telegram_api_url = f"{telegram_base_api_url}/{envars.telegram_full_token}"
 
 provider = 'telegram'
 
@@ -58,7 +58,7 @@ def download_file_from_telegram(
 		save_name = secrets.token_hex(16) + "." + extension
 
 	# Download the image
-	url = f"{telegram_base_api_url}/file/{secretstuff.telegram_full_token}/{file_path}"
+	url = f"{telegram_base_api_url}/file/{envars.telegram_full_token}/{file_path}"
 	r = requests.get(url)
 
 	if r.status_code == 200:
@@ -140,7 +140,7 @@ def telegram_webhook():
 				'message': 'No webhook verification token received'
 			}, 401
 
-		if auth_token_received_from_webhook != secretstuff.telegram_webhook_auth:
+		if auth_token_received_from_webhook != envars.telegram_webhook_auth:
 			logging.error("Token " + auth_token_received_from_webhook + " did not match expected")
 			return {
 				'status': 'error',

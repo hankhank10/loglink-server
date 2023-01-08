@@ -14,16 +14,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 # Import secrets
-from . import secretstuff
+from . import envars
 from . import whitelist
 
 # Sentry for error logging
 from sentry_sdk.integrations.flask import FlaskIntegration
 sentry_logging = True  # Disable this if you have self deployed and don't want to send errors to Sentry
 if sentry_logging:
-    if secretstuff.sentry_dsn:
+    if envars.sentry_dsn:
         sentry_sdk.init(
-            dsn=secretstuff.sentry_dsn,
+            dsn=envars.sentry_dsn,
             integrations=[
                 FlaskIntegration(),
             ],
@@ -37,7 +37,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///messages.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.sort_keys = False
-app.config['SECRET_KEY'] = secretstuff.app_secret_key
+app.config['SECRET_KEY'] = envars.app_secret_key
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -46,7 +46,7 @@ app_uri = "https://loglink.it/"
 security_disclaimer_api = f"{app_uri}/security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
-telegram_invite_link_uri = f"https://t.me/{secretstuff.telegram_bot_name}"
+telegram_invite_link_uri = f"https://t.me/{envars.telegram_bot_name}"
 
 latest_plugin_version = "0.0.0"
 latest_plugin_version_last_checked = datetime.now()
@@ -693,7 +693,7 @@ def check_db():
 def check_health():
 
     admin_password = request.headers.get('admin-password')
-    if admin_password != secretstuff.admin_password:
+    if admin_password != envars.admin_password:
         return {
             "status": "error",
             "message": "Invalid admin password"
@@ -714,7 +714,7 @@ def check_health():
 def create_new_beta_codes():
 
     admin_password = request.headers.get('admin-password')
-    if admin_password != secretstuff.admin_password:
+    if admin_password != envars.admin_password:
         return {
             "status": "error",
             "message": "Invalid admin password"
