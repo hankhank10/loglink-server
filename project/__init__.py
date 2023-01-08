@@ -15,7 +15,6 @@ from flask_migrate import Migrate
 
 # Import secrets
 from . import envars
-from . import whitelist
 
 # Sentry for error logging
 from sentry_sdk.integrations.flask import FlaskIntegration
@@ -112,6 +111,7 @@ telegram_require_beta_code = True
 use_whatsapp = False
 if use_whatsapp:
     valid_providers.append('whatsapp')
+    from . import whitelist
 whatsapp_whitelist_only = True
 
 
