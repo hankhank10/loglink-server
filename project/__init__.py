@@ -739,5 +739,10 @@ def create_new_beta_codes():
         }
 
     if request.method == 'GET':
-        return list_of_beta_codes()
+        result = list_of_beta_codes()
+        return {
+            'status': 'success',
+            'count': len(result),
+            'codes': result
+        }
 
