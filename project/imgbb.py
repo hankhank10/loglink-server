@@ -1,4 +1,4 @@
-from . import secretstuff
+from . import envars
 import requests
 from pprint import pprint
 import logging

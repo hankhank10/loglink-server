@@ -1,7 +1,7 @@
 import os
 import logging
 from imgur_python import Imgur
-from . import secretstuff
+from . import envars
 
 imgur_client = Imgur({'client_id': secretstuff.imgur_client_id})
 
