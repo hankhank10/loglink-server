@@ -3,7 +3,7 @@ import logging
 from imgur_python import Imgur
 from . import envars
 
-imgur_client = Imgur({'client_id': secretstuff.imgur_client_id})
+imgur_client = Imgur({'client_id': envars.imgur_client_id})
 
 
 def upload_image(image_path, delete_after_upload=True):

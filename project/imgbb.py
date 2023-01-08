@@ -14,7 +14,7 @@ def upload_image(
 
 	# If no token provided then use the default one
 	if not user_api_token:
-		user_api_token = secretstuff.imgbb_api_key
+		user_api_token = envars.imgbb_api_key
 
 	# Put together the request
 	payload = {
