@@ -152,6 +152,9 @@ class Message(db.Model):
         return (datetime.now() - self.timestamp).seconds / 60
 
 
+with app.app_context():
+    db.create_all()
+
 ################
 # HOUSEKEEPING #
 ################
