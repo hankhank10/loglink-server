@@ -5,6 +5,8 @@ from project import app
 from project import telegram
 from project import envars
 
+from project import User, Message
+
 import project
 from random import randint
 
@@ -124,7 +126,6 @@ def test_create_user_valid():
 		)
 		assert response.status_code == 200
 		code_added = response.json["codes_added"][0]
-		print(code_added)
 
 	# Send a valid webhook simulating a new user
 	telegram_webhook["message"]["text"] = "/start " + code_added
@@ -135,4 +136,11 @@ def test_create_user_valid():
 			json=telegram_webhook
 		)
 		assert response.status_code == 200
+
+	# Check the created user is in the database
+	user = User.query.filter_by(
+		provider_id=telegram_webhook["message"]["chat"]["id"]
+	).first()
+	assert user is not None
+
 
