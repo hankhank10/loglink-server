@@ -114,8 +114,11 @@ def test_telegram_webhook_security():
 		assert b'error' in response.data
 
 
+user_token = None
+
 def test_create_user_valid():
 	global telegram_webhook
+	global user_token
 
 	# Create a beta code
 	with app.test_client() as client:
@@ -143,4 +146,47 @@ def test_create_user_valid():
 	).first()
 	assert user is not None
 
+	user_token = user.token
+
+
+def test_create_new_message_valid():
+	global telegram_webhook
+
+	# Send a valid webhook simulating a new message
+	telegram_webhook["message"]["text"] = "A sample Telegram webhook"
+	with app.test_client() as client:
+		response = client.post(
+			'/telegram/webhook/',
+			headers={"X-Telegram-Bot-Api-Secret-Token": envars.telegram_webhook_auth},
+			json=telegram_webhook
+		)
+		assert response.status_code == 200
+
+
+def test_retrieve_message_fail():
+	# Check that a nonsense response fails
+	with app.test_client() as client:
+		response = client.post(
+			'/get_new_messages/',
+			json={
+				"user_id": "an_id_that_definitely_does_not_exist",
+			}
+		)
+		assert response.status_code == 404
+		assert b'error' in response.data
+
+
+def test_retrieve_message_valid():
+
+	# Check that the message can be retrieved
+	with app.test_client() as client:
+		response = client.post(
+			'/get_new_messages/',
+			json={
+				"user_id": user_token,
+			}
+		)
+		assert response.status_code == 200
+		assert response.json["messages"]["count"] == 1
+		assert response.json["messages"]["contents"][0]["contents"] == telegram_webhook["message"]["text"]
 
