@@ -164,7 +164,10 @@ def telegram_webhook():
 			}
 		except:
 			logging.error ("Error parsing JSON")
-			return "Error: Telegram message missing mandatory fields"
+			return {
+				'status': 'error',
+				'message': 'Telegram webhook JSON could not be parsed'
+			}, 401
 
 		# Check if this is a new user and if so run the onboarding workflow
 		user = User.query.filter_by(provider_id=message_received['telegram_chat_id']).first()
@@ -179,7 +182,10 @@ def telegram_webhook():
 						provider_id=message_received['telegram_chat_id'],
 						beta_code=beta_code_provided,
 					)
-					return "done"
+					if result:
+						return "ok", 200
+					else:
+						return "error onboarding", 400
 				send_message(
 					provider=provider,
 					provider_id=message_received['telegram_chat_id'],
@@ -389,13 +395,11 @@ def telegram_webhook():
 			# If message type has not been set then return an error
 			if result:
 				logging.info("Message successfully handled")
-				return "ok"
+				return "ok", 200
 			else:
 				logging.error("Failed to add message to database")
 				send_message(provider, message_received['telegram_chat_id'], message_string["error_with_message"])
-				return "Failed to add message to database"
-
-			return "ok"
+				return "Failed to add message to database", 400
 
 
 def check_webhook_health():
