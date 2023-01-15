@@ -2,6 +2,7 @@ import pytest
 
 from project import app
 from project import telegram
+from project import envars
 
 import project
 
