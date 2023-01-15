@@ -112,7 +112,7 @@ def test_telegram_webhook_security():
 		assert b'error' in response.data
 
 
-def tst_create_user_valid():
+def test_create_user_valid():
 	global telegram_webhook
 
 	# Create a beta code
