@@ -132,6 +132,10 @@ class User(db.Model):
 
     api_call_count:int = db.Column(db.Integer, default=0)
 
+    @property
+    def messages(self):
+        return Message.query.filter_by(user_id=self.id).all()
+
 
 @dataclass
 class Message(db.Model):
