@@ -3,6 +3,8 @@ import pytest
 from project import app
 from project import telegram
 
+import project
+
 
 def test_index():
 	# Check that the API is running
