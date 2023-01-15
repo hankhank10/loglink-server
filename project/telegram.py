@@ -128,7 +128,7 @@ def telegram_webhook():
 
 	if request.method == 'POST':
 
-		pprint.pprint(request.json)
+		#pprint.pprint(request.json)
 
 		# Check the headers
 		auth_token_received_from_webhook = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
