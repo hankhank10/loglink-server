@@ -162,6 +162,12 @@ def test_create_new_message_valid():
 		)
 		assert response.status_code == 200
 
+	# Check the created message is in the database
+	messages = User.query.filter_by(
+		token = user_token
+	).first().messages
+	assert len(messages) == 1
+
 
 def test_retrieve_message_fail():
 	# Check that a nonsense response fails
@@ -177,7 +183,6 @@ def test_retrieve_message_fail():
 
 
 def test_retrieve_message_valid():
-
 	# Check that the message can be retrieved
 	with app.test_client() as client:
 		response = client.post(
@@ -190,3 +195,23 @@ def test_retrieve_message_valid():
 		assert response.json["messages"]["count"] == 1
 		assert response.json["messages"]["contents"][0]["contents"] == telegram_webhook["message"]["text"]
 
+
+def test_message_only_delivered_once():
+	# Check that the message has been deleted
+	with app.test_client() as client:
+		response = client.post(
+			'/get_new_messages/',
+			json={
+				"user_id": user_token,
+			}
+		)
+		assert response.status_code == 200
+		assert response.json["messages"]["count"] == 0
+
+
+def test_message_has_been_deleted():
+	# Check that the message has been deleted
+	messages = User.query.filter_by(
+		token = user_token
+	).first().messages
+	assert len(messages) == 0
