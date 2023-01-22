@@ -77,6 +77,7 @@ message_string = {
     "resetting_your_token": "Resetting your token.",
     "more_help": f"Please visit {app_uri} for more assistance",
     "error_with_message": "This message could not be saved",
+    "message_type_not_supported": "This message type is not supported",
     "plugin_instructions": f"You should paste this token into your plugin settings in Logseq. See {app_uri}setup-plugin for more information.",
     "telegram_help_message": "*LogLink Help Menu*^^You can use the following commands to seek help:^^/imgbb: Connect LogLink with your imgBB account to allow image uploads^/token_refresh: Generate a new token and send it to yourself^/delete_account: Delete your account^^The full instructions are at " + app_uri + "",
     "sorry_didnt_understand_command": "Sorry, I didn't understand that command.",

@@ -47,6 +47,11 @@ command_list = [
 	"/delete_account_confirm",
 ]
 
+supported_message_types = [
+	"text",
+	"photo",
+	"location",
+]
 
 def download_file_from_telegram(
 	file_path,
@@ -298,7 +303,7 @@ def telegram_webhook():
 						provider_message_id=message_received['telegram_message_id'],
 					)
 
-			elif 'photo' in data['message']:
+			if 'photo' in data['message']:
 
 				if 'photo' in data['message']:
 					message_received['message_type'] = 'photo'
@@ -392,12 +397,20 @@ def telegram_webhook():
 					provider_message_id=message_received['telegram_message_id'],
 				)
 
+			if 'document' in data['message']:
+				send_message(
+					provider,
+					message_received['telegram_chat_id'],
+					message_string['message_type_not_supported']
+				)
+				result = True
+
 			# If message type has not been set then return an error
 			if result:
 				logging.info("Message successfully handled")
 				return "ok", 200
 			else:
-				logging.error("Failed to add message to database")
+				logging.error("Failed to add message to database in a way that was unhandled")
 				send_message(provider, message_received['telegram_chat_id'], message_string["error_with_message"])
 				return "Failed to add message to database", 400
 
