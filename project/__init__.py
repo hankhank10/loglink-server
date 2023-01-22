@@ -175,12 +175,12 @@ def calculate_version_number(version):
 
 def get_latest_plugin_version():
     url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
-    logging.error("Getting latest plugin version from Github API")
+    logging.info("Getting latest plugin version from Github API")
     response = requests.get(url)
     if response.status_code == 200:
         response = response.json()
         version = response['tag_name']
-        logging.error (f"Latest plugin version is {version}")
+        logging.info (f"Latest plugin version is {version}")
         return version
     else:
         logging.error (f"Error getting latest plugin version: {response.status_code}")
