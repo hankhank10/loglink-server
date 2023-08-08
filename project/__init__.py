@@ -104,7 +104,7 @@ media_urls = {
     'sad_pam': 'https://media.giphy.com/media/YLgIOmtIMUACY/giphy-downsized-large.gif'
 }
 
-# This server supports both Telegram and Whatsapp. Telegram is required, Whatsapp is optional.
+# This server supports both Telegram and Whatsapp. Telegram is required, Whatsapp is actually not implemented.
 valid_providers = ['telegram']
 
 # Telegram settings
