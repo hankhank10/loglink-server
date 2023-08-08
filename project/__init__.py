@@ -338,8 +338,11 @@ def add_new_message(
         contents=message_contents,
         timestamp=datetime.now(),
     )
-    db.session.add(new_message)
-    db.session.commit()
+    try:
+        db.session.add(new_message)
+        db.session.commit()
+    except:
+        return False
 
     return True
 
