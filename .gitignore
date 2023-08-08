@@ -11,3 +11,4 @@ whitelist.py
 mailman.py
 /debug/*
 *.env
+.vscode/*
