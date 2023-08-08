@@ -146,7 +146,7 @@ class Message(db.Model):
 
     provider_message_id:str = db.Column(db.String(100))
 
-    user_id = db.Column(db.String(80), db.ForeignKey('user.id'))
+    user_id = db.Column(db.String(80), db.ForeignKey('user.id'), index=True)
 
     contents:str = db.Column(db.String(10000))
     timestamp:datetime = db.Column(db.DateTime)
