@@ -615,10 +615,41 @@ if not creating_db:
     if 'whatsapp' in valid_providers:
         from . import whatsapp
 
+#########
+# ADMIN #
+#########
+
+
+def send_service_message(
+    contents,
+    user_id=None
+):
+
+    telegram_provider_id_list_to_send_message_to = []
+
+    if user_id:
+        user = User.query.filter_by(id=user_id).first()
+        if user:
+            if user.provider == "telegram":
+                telegram_provider_id_list_to_send_message_to.append(
+                    user.provider_id)
+
+    else:
+        telegram_provider_id_list_to_send_message_to = [
+            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
+
+    for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
+        telegram.send_telegram_message(
+            telegram_provider_id,
+            contents,
+            disable_notification=True
+        )
+
 
 #####################
 # ROUTES            #
 #####################
+
 
 @app.route('/')
 def index():
