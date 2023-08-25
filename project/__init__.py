@@ -757,12 +757,16 @@ invalid_admin_password_message = {
     "message": "Invalid admin password"
 }
 
+# VERY IMPORTANT THIS IS SET TO TRUE IN DEPLOYMENT
+require_admin_password = True
+
 
 @app.route('/admin')
 def admin_home():
-    admin_password_provided = request.headers.get('admin-password')
-    if not is_admin_password_valid(admin_password_provided):
-        return invalid_admin_password_message, 401
+    if require_admin_password:
+        admin_password_provided = request.headers.get('admin-password')
+        if not is_admin_password_valid(admin_password_provided):
+            return invalid_admin_password_message, 401
 
     return render_template('admin_home.html')
 
@@ -770,9 +774,10 @@ def admin_home():
 @app.route('/admin/health')
 def check_health():
 
-    admin_password_provided = request.headers.get('admin-password')
-    if not is_admin_password_valid(admin_password_provided):
-        return invalid_admin_password_message, 401
+    if require_admin_password:
+        admin_password_provided = request.headers.get('admin-password')
+        if not is_admin_password_valid(admin_password_provided):
+            return invalid_admin_password_message, 401
 
     telegram_health = telegram.check_webhook_health()
 
@@ -788,9 +793,10 @@ def check_health():
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
 def beta_codes_route():
 
-    admin_password_provided = request.headers.get('admin-password')
-    if not is_admin_password_valid(admin_password_provided):
-        return invalid_admin_password_message, 401
+    if require_admin_password:
+        admin_password_provided = request.headers.get('admin-password')
+        if not is_admin_password_valid(admin_password_provided):
+            return invalid_admin_password_message, 401
 
     if request.method == 'POST':
         # This creates a new beta code

@@ -5,7 +5,7 @@ from project import app
 from project import telegram
 from project import envars
 
-from project import User, Message
+from project import User, Message, require_admin_password
 
 import project
 from random import randint
@@ -83,6 +83,11 @@ list_of_admin_get_routes_to_check = [
     '/admin/health',
     '/admin/beta_codes',
 ]
+
+
+def test_admin_password_required():
+    # Check that admin_password_required is set to True
+    assert require_admin_password is True
 
 
 def test_admin_get_routes_with_bad_security_fail():
