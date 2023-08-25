@@ -413,7 +413,10 @@ def compose_image_message_contents(
     # Upload the image to the cloud service
     image_upload_result = False
     if image_upload_service == "imgbb":
-        image_upload_result = imgbb.upload_image(image_file_path)
+        image_upload_result = imgbb.upload_image(
+            image_file_path,
+            user_api_token=imgbb_api_key
+        )
     else:
         # If image_upload_service is not set to something we recognise then return False
         return False
