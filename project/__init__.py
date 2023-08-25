@@ -596,36 +596,6 @@ if not creating_db:
         from . import telegram
 
 
-#########
-# ADMIN #
-#########
-
-def send_service_message(
-    contents,
-    user_id=None
-):
-
-    telegram_provider_id_list_to_send_message_to = []
-
-    if user_id:
-        user = User.query.filter_by(id=user_id).first()
-        if user:
-            if user.provider == "telegram":
-                telegram_provider_id_list_to_send_message_to.append(
-                    user.provider_id)
-
-    else:
-        telegram_provider_id_list_to_send_message_to = [
-            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
-
-    for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
-        telegram.send_telegram_message(
-            telegram_provider_id,
-            contents,
-            disable_notification=True
-        )
-
-
 #####################
 # ROUTES            #
 #####################
@@ -731,7 +701,36 @@ def get_new_messages():
     }), 200
 
 
-# Debugging routes
+#########
+# ADMIN #
+#########
+
+def send_service_message(
+    contents,
+    user_id=None
+):
+    # Send a service message to a particular user, or if a user_id is not provided, to all users
+
+    telegram_provider_id_list_to_send_message_to = []
+
+    if user_id:
+        user = User.query.filter_by(id=user_id).first()
+        if user:
+            if user.provider == "telegram":
+                telegram_provider_id_list_to_send_message_to.append(
+                    user.provider_id)
+
+    else:
+        telegram_provider_id_list_to_send_message_to = [
+            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
+
+    for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
+        telegram.send_telegram_message(
+            telegram_provider_id,
+            contents,
+            disable_notification=True
+        )
+
 
 def check_db():
     return {
