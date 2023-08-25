@@ -764,7 +764,7 @@ def admin_home():
     if not is_admin_password_valid(admin_password_provided):
         return invalid_admin_password_message, 401
 
-    return "🟢 Admin API is running"
+    return render_template('admin_home.html')
 
 
 @app.route('/admin/health')

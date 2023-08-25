@@ -78,15 +78,16 @@ def test_index_post_fail():
         assert b'API is running' not in response.data
 
 
-def test_admin_routes_with_bad_security_fail():
+list_of_admin_get_routes_to_check = [
+    '/admin',
+    '/admin/health',
+    '/admin/beta_codes',
+]
 
-    list_of_admin_get_routes_to_check = [
-        '/admin',
-        '/admin/health',
-        '/admin/beta_codes',
-    ]
 
+def test_admin_get_routes_with_bad_security_fail():
     # Check that the admin routes can't be accessed without the right password
+
     for route in list_of_admin_get_routes_to_check:
         with app.test_client() as client:
             response = client.get(
@@ -95,6 +96,19 @@ def test_admin_routes_with_bad_security_fail():
             )
             assert response.status_code == 401 or response.status_code == 400
             assert b'error' in response.data
+
+
+def test_admin_get_routes_with_good_security_pass():
+    # Check that the admin routes can be accessed with the right password
+
+    for route in list_of_admin_get_routes_to_check:
+        with app.test_client() as client:
+            response = client.get(
+                route,
+                headers={"admin-password": envars.admin_password}
+            )
+            assert response.status_code == 200
+            assert b'error' not in response.data
 
 
 def test_beta_code_security_post_fail():
