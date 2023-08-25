@@ -1,4 +1,5 @@
 *.pyc
+/project/migrations/*
 /migrations/*
 *.sqlite3
 secretstuff.py
@@ -10,3 +11,4 @@ whitelist.py
 mailman.py
 /debug/*
 *.env
+.vscode/*

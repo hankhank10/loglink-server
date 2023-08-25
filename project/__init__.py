@@ -1,4 +1,5 @@
-import os, glob
+import os
+import glob
 import requests
 from requests.auth import HTTPBasicAuth
 from datetime import datetime, time, timedelta
@@ -18,7 +19,8 @@ from . import envars
 
 # Sentry for error logging
 from sentry_sdk.integrations.flask import FlaskIntegration
-sentry_logging = True  # Disable this if you have self deployed and don't want to send errors to Sentry
+# Disable this if you have self deployed and don't want to send errors to Sentry
+sentry_logging = True
 if sentry_logging:
     if envars.sentry_dsn:
         sentry_sdk.init(
@@ -102,13 +104,13 @@ media_urls = {
     'sad_pam': 'https://media.giphy.com/media/YLgIOmtIMUACY/giphy-downsized-large.gif'
 }
 
-# This server supports both Telegram and Whatsapp. Telegram is required, Whatsapp is optional.
+# This server was originally planned to support both Telegram and Whatsapp. Telegram is required, Whatsapp is actually not implemented.
 valid_providers = ['telegram']
 
 # Telegram settings
 telegram_require_beta_code = True
 
-# Whatsapp settings
+# Whatsapp settings - at present these don't actually do anything
 use_whatsapp = False
 if use_whatsapp:
     valid_providers.append('whatsapp')
@@ -116,22 +118,23 @@ if use_whatsapp:
 whatsapp_whitelist_only = True
 
 
-
 # Define the model in which the user data, tokens and messages are stored
 @dataclass
 class User(db.Model):
-    id:int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.Integer, primary_key=True)
 
-    token:str = db.Column(db.String(80), unique=True, nullable=False)
+    token: str = db.Column(db.String(80), unique=True, nullable=False)
 
-    provider:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
-    provider_id:str = db.Column(db.String(30), unique=True, nullable=True)  # For whatsapp this is a phone number, for telegram this is a chat_id
+    provider: str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
 
-    approved:bool = db.Column(db.Boolean, nullable=False, default=True)
+    # For whatsapp this is a phone number, for telegram this is a chat_id
+    provider_id: str = db.Column(db.String(30), unique=True, nullable=True)
 
-    imgbb_api_key:str = db.Column(db.String(80), nullable=True)
+    approved: bool = db.Column(db.Boolean, nullable=False, default=True)
 
-    api_call_count:int = db.Column(db.Integer, default=0)
+    imgbb_api_key: str = db.Column(db.String(80), nullable=True)
+
+    api_call_count: int = db.Column(db.Integer, default=0, nullable=False)
 
     @property
     def messages(self):
@@ -140,17 +143,17 @@ class User(db.Model):
 
 @dataclass
 class Message(db.Model):
-    id:int = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.Integer, primary_key=True)
 
-    provider:str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+    provider: str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
 
-    provider_message_id:str = db.Column(db.String(100))
+    provider_message_id: str = db.Column(db.String(100))
 
     user_id = db.Column(db.String(80), db.ForeignKey('user.id'))
 
-    contents:str = db.Column(db.String(10000))
-    timestamp:datetime = db.Column(db.DateTime)
-    delivered:bool = db.Column(db.Boolean, default=False)
+    contents: str = db.Column(db.String(10000))
+    timestamp: datetime = db.Column(db.DateTime)
+    delivered: bool = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
     def minutes_old(self):
@@ -164,31 +167,39 @@ with app.app_context():
 # HOUSEKEEPING #
 ################
 
+
 def calculate_version_number(version):
+    # This translates a github tag (eg v.1.0.7) and translates it into a integer where later versions will be higher
+
     version = str(version)
     version = version.replace("v", "")
     major_version = version.split(".")[0]
     minor_version = version.split(".")[1]
     patch_version = version.split(".")[2]
-    version = int(major_version) * 10000 + int(minor_version) * 100 + int(patch_version)
+    version = int(major_version) * 10000 + \
+        int(minor_version) * 100 + int(patch_version)
     return version
 
 
 def get_latest_plugin_version():
+    # Gets the latest version of the loglink pulgin from github - if you are self deploying this or using a custom plugin then you may want to change this
+
     url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
     logging.info("Getting latest plugin version from Github API")
     response = requests.get(url)
     if response.status_code == 200:
         response = response.json()
         version = response['tag_name']
-        logging.info (f"Latest plugin version is {version}")
+        logging.info(f"Latest plugin version is {version}")
         return version
     else:
-        logging.error (f"Error getting latest plugin version: {response.status_code}")
+        logging.error(
+            f"Error getting latest plugin version: {response.status_code}")
         return "0.0.0"
 
 
 def list_of_beta_codes():
+    # Gets the list of beta codes in the beta_codes folder
     list_of_codes = []
     for file in glob.glob(f"{beta_codes_folder}/*.txt"):
         filename = file.replace(".txt", "")
@@ -198,6 +209,7 @@ def list_of_beta_codes():
 
 
 def use_beta_code(beta_code):
+    # "Uses" a beta code by deleting it from the directory
     if beta_code in list_of_beta_codes():
         os.remove(f"{beta_codes_folder}/{beta_code}.txt")
         return True
@@ -205,7 +217,7 @@ def use_beta_code(beta_code):
         return False
 
 
-def escape_markdown(text, carriage_return_only = False):
+def escape_markdown(text, carriage_return_only=False):
     if not carriage_return_only:
         char_list = [
             "_",
@@ -242,6 +254,8 @@ def delete_delivered_messages(user_id=None):
 
 
 def delete_all_messages(user_id):
+    # Delete all messages for a particular user
+
     messages = Message.query.filter_by(
         user_id=user_id
     ).delete()
@@ -254,6 +268,8 @@ def delete_all_messages(user_id):
 
 
 def random_token(token_type=None):
+    # Generate a random token
+
     if token_type == "whatsapp":
         return "whatsapp"+secrets.token_hex(token_length)
     if token_type == "telegram":
@@ -262,6 +278,8 @@ def random_token(token_type=None):
 
 
 def user_can_upload_to_cloud(user_id):
+    # Check that the user both exists and has an imgbb key associated with their account
+
     user = User.query.filter_by(id=user_id).first()
     if not user:
         return False
@@ -315,7 +333,7 @@ def add_new_message(
     provider_message_id=None,
 ):
 
-    # Get the user
+    # Get the user record
     user = User.query.filter_by(id=user_id).first()
 
     if not user:
@@ -333,8 +351,11 @@ def add_new_message(
         contents=message_contents,
         timestamp=datetime.now(),
     )
-    db.session.add(new_message)
-    db.session.commit()
+    try:
+        db.session.add(new_message)
+        db.session.commit()
+    except:
+        return False
 
     return True
 
@@ -384,14 +405,21 @@ def compose_image_message_contents(
 
     # If we require the user to have their own cloud account, check whether they have one
     if require_user_to_have_own_cloud_account:
+        # At the moment only imgbb is implemented
         if not imgbb_api_key:
             logging.error("No imgbb API key provided")
             return False
 
     # Upload the image to the cloud service
     image_upload_result = False
-
-    image_upload_result = imgbb.upload_image(image_file_path)
+    if image_upload_service == "imgbb":
+        image_upload_result = imgbb.upload_image(
+            image_file_path,
+            user_api_token=imgbb_api_key
+        )
+    else:
+        # If image_upload_service is not set to something we recognise then return False
+        return False
 
     if not image_upload_result:
         return False
@@ -403,6 +431,8 @@ def compose_image_message_contents(
             message_contents = f"{caption} ![{caption}]({image_upload_result})"
         else:
             message_contents = image_upload_result
+    else:
+        return False
 
     return message_contents
 
@@ -446,7 +476,8 @@ def send_message(
         return True
 
     if provider == 'telegram':
-        telegram.send_telegram_message(provider_id, contents, disable_notification)
+        telegram.send_telegram_message(
+            provider_id, contents, disable_notification)
         return True
 
     return False
@@ -500,14 +531,17 @@ def onboarding_workflow(
 
     if not user:
         logging.error("Failed to create new user")
-        send_message(provider, provider_id, message_string["problem_creating_user_generic"])
+        send_message(provider, provider_id,
+                     message_string["problem_creating_user_generic"])
         return False
 
     logging.info("New user: %s", user.provider_id)
     send_message(provider, provider_id, message_string["welcome_to_loglink"])
-    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"], disable_notification=True)
+    send_message(provider, provider_id,
+                 message_string["token_will_be_sent_in_next_message"], disable_notification=True)
     send_message(provider, provider_id, user.token, disable_notification=True)
-    send_message(provider, provider_id, message_string["plugin_instructions"], disable_notification=True)
+    send_message(provider, provider_id,
+                 message_string["plugin_instructions"], disable_notification=True)
     return True
 
 
@@ -526,7 +560,8 @@ def offboarding_workflow(
 
     if not user:
         # User is not in the database
-        send_message(provider, provider_id, message_string["delete_failed_not_in_database"])
+        send_message(provider, provider_id,
+                     message_string["delete_failed_not_in_database"])
         return False
 
     # Delete all messages associated with that user
@@ -558,7 +593,8 @@ def help_send_new_token(
     user.token = random_token(provider)
     db.session.commit()
     send_message(provider, provider_id, message_string["resetting_your_token"])
-    send_message(provider, provider_id, message_string["token_will_be_sent_in_next_message"])
+    send_message(provider, provider_id,
+                 message_string["token_will_be_sent_in_next_message"])
     send_message(provider, provider_id, user.token)
     return True
 
@@ -633,7 +669,8 @@ def get_new_messages():
             new_messages.append(message_in_memory)
             if 'whatsapp' in valid_providers:
                 if message.provider == "whatsapp":
-                    whatsapp.mark_whatsapp_message_read(message.provider_message_id)
+                    whatsapp.mark_whatsapp_message_read(
+                        message.provider_message_id)
 
     # Mark them as read and delete them from the database
     db.session.commit()
@@ -649,14 +686,18 @@ def get_new_messages():
 
     # Check if a version number was sent
     plugin_version = posted_json.get('plugin_version')
-    logging.info(f"User version is {plugin_version}, latest found on github is {latest_plugin_version}")
+    logging.info(
+        f"User version is {plugin_version}, latest found on github is {latest_plugin_version}")
     if plugin_version:
-        print ("Plugin version: " + plugin_version + " vs latest " + latest_plugin_version)
+        print("Plugin version: " + plugin_version +
+              " vs latest " + latest_plugin_version)
         cumulative_plugin_version = calculate_version_number(plugin_version)
-        cumulative_latest_plugin_version = calculate_version_number(latest_plugin_version)
+        cumulative_latest_plugin_version = calculate_version_number(
+            latest_plugin_version)
         try:
             if cumulative_plugin_version < cumulative_latest_plugin_version:
-                logging.info ('Old version detected: ' + str(cumulative_plugin_version) + ' < ' + str(cumulative_latest_plugin_version))
+                logging.info('Old version detected: ' + str(cumulative_plugin_version) +
+                             ' < ' + str(cumulative_latest_plugin_version))
                 new_messages.append({
                     'contents': message_string['new_version_available'],
                 })
@@ -683,7 +724,6 @@ def get_new_messages():
     }), 200
 
 
-
 # Debugging routes
 
 def check_db():
@@ -691,8 +731,8 @@ def check_db():
         'users': User.query.count(),
         'messages': {
             'total': Message.query.count(),
-            'delivered': Message.query.filter_by(delivered = True).count(),
-            'undelivered': Message.query.filter_by(delivered = False).count()
+            'delivered': Message.query.filter_by(delivered=True).count(),
+            'undelivered': Message.query.filter_by(delivered=False).count()
         }
     }
 
@@ -738,7 +778,7 @@ def create_new_beta_codes():
         list_of_codes = []
         for i in range(number_of_codes):
             new_code = secrets.token_hex(5)
-            open (f"{beta_codes_folder}/{new_code}.txt", "w").close()
+            open(f"{beta_codes_folder}/{new_code}.txt", "w").close()
             list_of_codes.append(new_code)
 
         return {
@@ -753,4 +793,3 @@ def create_new_beta_codes():
             'count': len(result),
             'codes': result
         }
-
