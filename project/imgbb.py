@@ -6,9 +6,9 @@ api_url = "https://api.imgbb.com/1/upload"
 
 
 def upload_image(
-        image_path,
-        user_api_token=None,
-        expiration=None,
+    image_path,
+    user_api_token=None,
+    expiration=None,
 ):
 
     # If no token provided then use the default one
@@ -32,7 +32,11 @@ def upload_image(
     if response.status_code != 200:
         return False
 
-    image_url = response.json().get('data').get('url')
+    try:
+        image_url = response.json().get('data').get('url')
+    except Exception as e:
+        logging.error(e)
+        return False
 
     return image_url
 
