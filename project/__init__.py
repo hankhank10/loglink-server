@@ -752,15 +752,27 @@ def is_admin_password_valid(
         return False
 
 
+invalid_admin_password_message = {
+    "status": "error",
+    "message": "Invalid admin password"
+}
+
+
+@app.route('/admin')
+def admin_home():
+    admin_password_provided = request.headers.get('admin-password')
+    if not is_admin_password_valid(admin_password_provided):
+        return invalid_admin_password_message, 401
+
+    return "🟢 Admin API is running"
+
+
 @app.route('/admin/health')
 def check_health():
 
     admin_password_provided = request.headers.get('admin-password')
     if not is_admin_password_valid(admin_password_provided):
-        return {
-            "status": "error",
-            "message": "Invalid admin password"
-        }, 401
+        return invalid_admin_password_message, 401
 
     telegram_health = telegram.check_webhook_health()
 
@@ -778,10 +790,7 @@ def beta_codes_route():
 
     admin_password_provided = request.headers.get('admin-password')
     if not is_admin_password_valid(admin_password_provided):
-        return {
-            "status": "error",
-            "message": "Invalid admin password"
-        }, 401
+        return invalid_admin_password_message, 401
 
     if request.method == 'POST':
         # This creates a new beta code
