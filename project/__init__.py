@@ -110,7 +110,7 @@ valid_providers = ['telegram']
 # Telegram settings
 telegram_require_beta_code = True
 
-# Whatsapp settings
+# Whatsapp settings - at present these don't actually do anything
 use_whatsapp = False
 if use_whatsapp:
     valid_providers.append('whatsapp')
@@ -126,6 +126,7 @@ class User(db.Model):
     token: str = db.Column(db.String(80), unique=True, nullable=False)
 
     provider: str = db.Column(db.String(20), nullable=False)  # eg WhatsApp
+
     # For whatsapp this is a phone number, for telegram this is a chat_id
     provider_id: str = db.Column(db.String(30), unique=True, nullable=True)
 
@@ -168,6 +169,8 @@ with app.app_context():
 
 
 def calculate_version_number(version):
+    # This translates a github tag (eg v.1.0.7) and translates it into a integer where later versions will be higher
+
     version = str(version)
     version = version.replace("v", "")
     major_version = version.split(".")[0]
@@ -179,6 +182,8 @@ def calculate_version_number(version):
 
 
 def get_latest_plugin_version():
+    # Gets the latest version of the loglink pulgin from github - if you are self deploying this or using a custom plugin then you may want to change this
+
     url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
     logging.info("Getting latest plugin version from Github API")
     response = requests.get(url)
@@ -194,6 +199,7 @@ def get_latest_plugin_version():
 
 
 def list_of_beta_codes():
+    # Gets the list of beta codes in the beta_codes folder
     list_of_codes = []
     for file in glob.glob(f"{beta_codes_folder}/*.txt"):
         filename = file.replace(".txt", "")
@@ -203,6 +209,7 @@ def list_of_beta_codes():
 
 
 def use_beta_code(beta_code):
+    # "Uses" a beta code by deleting it from the directory
     if beta_code in list_of_beta_codes():
         os.remove(f"{beta_codes_folder}/{beta_code}.txt")
         return True
@@ -247,6 +254,8 @@ def delete_delivered_messages(user_id=None):
 
 
 def delete_all_messages(user_id):
+    # Delete all messages for a particular user
+
     messages = Message.query.filter_by(
         user_id=user_id
     ).delete()
@@ -259,6 +268,8 @@ def delete_all_messages(user_id):
 
 
 def random_token(token_type=None):
+    # Generate a random token
+
     if token_type == "whatsapp":
         return "whatsapp"+secrets.token_hex(token_length)
     if token_type == "telegram":
@@ -267,6 +278,8 @@ def random_token(token_type=None):
 
 
 def user_can_upload_to_cloud(user_id):
+    # Check that the user both exists and has an imgbb key associated with their account
+
     user = User.query.filter_by(id=user_id).first()
     if not user:
         return False
@@ -320,7 +333,7 @@ def add_new_message(
     provider_message_id=None,
 ):
 
-    # Get the user
+    # Get the user record
     user = User.query.filter_by(id=user_id).first()
 
     if not user:
@@ -392,14 +405,17 @@ def compose_image_message_contents(
 
     # If we require the user to have their own cloud account, check whether they have one
     if require_user_to_have_own_cloud_account:
+        # At the moment only imgbb is implemented
         if not imgbb_api_key:
             logging.error("No imgbb API key provided")
             return False
 
     # Upload the image to the cloud service
     image_upload_result = False
-
-    image_upload_result = imgbb.upload_image(image_file_path)
+    if image_upload_service == "imgbb":
+        image_upload_result = imgbb.upload_image(image_file_path)
+    else:
+        return False
 
     if not image_upload_result:
         return False
