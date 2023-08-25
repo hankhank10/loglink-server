@@ -415,6 +415,7 @@ def compose_image_message_contents(
     if image_upload_service == "imgbb":
         image_upload_result = imgbb.upload_image(image_file_path)
     else:
+        # If image_upload_service is not set to something we recognise then return False
         return False
 
     if not image_upload_result:
