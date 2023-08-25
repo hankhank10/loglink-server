@@ -110,13 +110,6 @@ valid_providers = ['telegram']
 # Telegram settings
 telegram_require_beta_code = True
 
-# Whatsapp settings - at present these don't actually do anything
-use_whatsapp = False
-if use_whatsapp:
-    valid_providers.append('whatsapp')
-    from . import whitelist
-whatsapp_whitelist_only = True
-
 
 # Define the model in which the user data, tokens and messages are stored
 @dataclass
@@ -270,8 +263,6 @@ def delete_all_messages(user_id):
 def random_token(token_type=None):
     # Generate a random token
 
-    if token_type == "whatsapp":
-        return "whatsapp"+secrets.token_hex(token_length)
     if token_type == "telegram":
         return "telegram"+secrets.token_hex(token_length)
     return "unknown"+secrets.token_hex(token_length)
@@ -298,11 +289,6 @@ def create_new_user(
 
     if provider not in valid_providers:
         return False
-
-    if provider == 'whatsapp':
-        if whatsapp_whitelist_only:
-            if provider_id not in whitelist.acceptable_whatsapp_numbers:
-                return False
 
     if provider == 'telegram':
         if telegram_require_beta_code:
@@ -471,10 +457,6 @@ def send_message(
     if provider not in valid_providers:
         return False
 
-    if provider == 'whatsapp':
-        whatsapp.whatsapp_messenger.send_message(contents, provider_id)
-        return True
-
     if provider == 'telegram':
         telegram.send_telegram_message(
             provider_id, contents, disable_notification)
@@ -612,13 +594,42 @@ def help_more_help(
 if not creating_db:
     if 'telegram' in valid_providers:
         from . import telegram
-    if 'whatsapp' in valid_providers:
-        from . import whatsapp
+
+
+#########
+# ADMIN #
+#########
+
+def send_service_message(
+    contents,
+    user_id=None
+):
+
+    telegram_provider_id_list_to_send_message_to = []
+
+    if user_id:
+        user = User.query.filter_by(id=user_id).first()
+        if user:
+            if user.provider == "telegram":
+                telegram_provider_id_list_to_send_message_to.append(
+                    user.provider_id)
+
+    else:
+        telegram_provider_id_list_to_send_message_to = [
+            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
+
+    for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
+        telegram.send_telegram_message(
+            telegram_provider_id,
+            contents,
+            disable_notification=True
+        )
 
 
 #####################
 # ROUTES            #
 #####################
+
 
 @app.route('/')
 def index():
@@ -667,10 +678,6 @@ def get_new_messages():
 
             message_in_memory = message
             new_messages.append(message_in_memory)
-            if 'whatsapp' in valid_providers:
-                if message.provider == "whatsapp":
-                    whatsapp.mark_whatsapp_message_read(
-                        message.provider_message_id)
 
     # Mark them as read and delete them from the database
     db.session.commit()
