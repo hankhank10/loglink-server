@@ -428,6 +428,8 @@ def compose_image_message_contents(
             message_contents = f"{caption} ![{caption}]({image_upload_result})"
         else:
             message_contents = image_upload_result
+    else:
+        return False
 
     return message_contents
 
