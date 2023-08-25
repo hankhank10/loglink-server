@@ -128,6 +128,18 @@ def test_beta_code_valid():
     assert response is True
 
 
+def test_beta_code_not_string_fail():
+    # Check that a beta code can't be created when the number of codes is not a string
+    with app.test_client() as client:
+        response = client.post(
+            '/admin/beta_codes',
+            headers={"admin-password": envars.admin_password},
+            json={"number_of_codes": "not_a_number"}
+        )
+        assert response.status_code == 400
+        assert b'error' in response.data
+
+
 def test_get_new_messages_fail():
     # Check that a nonsense response fails
     with app.test_client() as client:

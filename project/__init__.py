@@ -774,7 +774,7 @@ def check_health():
 
 
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
-def create_new_beta_codes():
+def beta_codes_route():
 
     admin_password_provided = request.headers.get('admin-password')
     if not is_admin_password_valid(admin_password_provided):
@@ -784,12 +784,29 @@ def create_new_beta_codes():
         }, 401
 
     if request.method == 'POST':
+        # This creates a new beta code
 
         # Check that we have been sent JSON
         telegram_beta_link_uri = f"{telegram_invite_link_uri}?start="
 
+        # Get the number of codes and check it's an integer
         number_of_codes = request.json.get('number_of_codes')
+        if not number_of_codes:
+            return {
+                "status": "error",
+                "message": "No number_of_codes provided"
+            }, 400
 
+        # Check that number of codes is an integer
+        try:
+            number_of_codes = int(number_of_codes)
+        except:
+            return {
+                "status": "error",
+                "message": "number_of_codes must be an integer"
+            }, 400
+
+        # Create the codes
         list_of_codes = []
         for i in range(number_of_codes):
             new_code = secrets.token_hex(5)
