@@ -743,15 +743,24 @@ def check_db():
     }
 
 
+def is_admin_password_valid(
+    password_provided
+):
+    if password_provided == envars.admin_password:
+        return True
+    else:
+        return False
+
+
 @app.route('/admin/health')
 def check_health():
 
-    admin_password = request.headers.get('admin-password')
-    if admin_password != envars.admin_password:
+    admin_password_provided = request.headers.get('admin-password')
+    if not is_admin_password_valid(admin_password_provided):
         return {
             "status": "error",
             "message": "Invalid admin password"
-        }, 400
+        }, 401
 
     telegram_health = telegram.check_webhook_health()
 
@@ -767,8 +776,8 @@ def check_health():
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
 def create_new_beta_codes():
 
-    admin_password = request.headers.get('admin-password')
-    if admin_password != envars.admin_password:
+    admin_password_provided = request.headers.get('admin-password')
+    if not is_admin_password_valid(admin_password_provided):
         return {
             "status": "error",
             "message": "Invalid admin password"
