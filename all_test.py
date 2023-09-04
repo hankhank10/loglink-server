@@ -5,7 +5,7 @@ from project import app
 from project import telegram
 from project import envars
 
-from project import User, Message
+from project import User, Message, require_admin_password
 
 import project
 from random import randint
@@ -78,15 +78,42 @@ def test_index_post_fail():
         assert b'API is running' not in response.data
 
 
-def test_beta_code_security_get_fail():
-    # Check that beta codes can't be read without the right password
-    with app.test_client() as client:
-        response = client.get(
-            '/admin/beta_codes',
-            headers={"admin-password": "wrong_password"}
-        )
-        assert response.status_code == 401
-        assert b'error' in response.data
+list_of_admin_get_routes_to_check = [
+    '/admin',
+    '/admin/health',
+    '/admin/beta_codes',
+]
+
+
+def test_admin_password_required():
+    # Check that admin_password_required is set to True
+    assert require_admin_password is True
+
+
+def test_admin_get_routes_with_bad_security_fail():
+    # Check that the admin routes can't be accessed without the right password
+
+    for route in list_of_admin_get_routes_to_check:
+        with app.test_client() as client:
+            response = client.get(
+                route,
+                headers={"admin-password": "wrong_password"}
+            )
+            assert response.status_code == 401 or response.status_code == 400
+            assert b'error' in response.data
+
+
+def test_admin_get_routes_with_good_security_pass():
+    # Check that the admin routes can be accessed with the right password
+
+    for route in list_of_admin_get_routes_to_check:
+        with app.test_client() as client:
+            response = client.get(
+                route,
+                headers={"admin-password": envars.admin_password}
+            )
+            assert response.status_code == 200
+            assert b'error' not in response.data
 
 
 def test_beta_code_security_post_fail():
@@ -115,6 +142,18 @@ def test_beta_code_valid():
     # Check that the beta code is valid
     response = project.use_beta_code(code_added)
     assert response is True
+
+
+def test_beta_code_not_string_fail():
+    # Check that a beta code can't be created when the number of codes is not a string
+    with app.test_client() as client:
+        response = client.post(
+            '/admin/beta_codes',
+            headers={"admin-password": envars.admin_password},
+            json={"number_of_codes": "not_a_number"}
+        )
+        assert response.status_code == 400
+        assert b'error' in response.data
 
 
 def test_get_new_messages_fail():

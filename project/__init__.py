@@ -596,36 +596,6 @@ if not creating_db:
         from . import telegram
 
 
-#########
-# ADMIN #
-#########
-
-def send_service_message(
-    contents,
-    user_id=None
-):
-
-    telegram_provider_id_list_to_send_message_to = []
-
-    if user_id:
-        user = User.query.filter_by(id=user_id).first()
-        if user:
-            if user.provider == "telegram":
-                telegram_provider_id_list_to_send_message_to.append(
-                    user.provider_id)
-
-    else:
-        telegram_provider_id_list_to_send_message_to = [
-            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
-
-    for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
-        telegram.send_telegram_message(
-            telegram_provider_id,
-            contents,
-            disable_notification=True
-        )
-
-
 #####################
 # ROUTES            #
 #####################
@@ -731,7 +701,36 @@ def get_new_messages():
     }), 200
 
 
-# Debugging routes
+#########
+# ADMIN #
+#########
+
+def send_service_message(
+    contents,
+    user_id=None
+):
+    # Send a service message to a particular user, or if a user_id is not provided, to all users
+
+    telegram_provider_id_list_to_send_message_to = []
+
+    if user_id:
+        user = User.query.filter_by(id=user_id).first()
+        if user:
+            if user.provider == "telegram":
+                telegram_provider_id_list_to_send_message_to.append(
+                    user.provider_id)
+
+    else:
+        telegram_provider_id_list_to_send_message_to = [
+            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
+
+    for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
+        telegram.send_telegram_message(
+            telegram_provider_id,
+            contents,
+            disable_notification=True
+        )
+
 
 def check_db():
     return {
@@ -744,15 +743,44 @@ def check_db():
     }
 
 
+def is_admin_password_valid(
+    password_provided
+):
+    if password_provided == envars.admin_password:
+        return True
+    else:
+        return False
+
+
+invalid_admin_password_message = {
+    "status": "error",
+    "message": "Invalid admin password"
+}
+
+# VERY IMPORTANT THIS IS SET TO TRUE IN DEPLOYMENT
+require_admin_password = True
+
+
+@app.route('/admin')
+def admin_home():
+    if require_admin_password:
+        admin_password_provided = request.headers.get('admin-password')
+        if not is_admin_password_valid(admin_password_provided):
+            return invalid_admin_password_message, 401
+
+    return render_template(
+        'admin_home.html',
+        health_status=check_health(),
+    )
+
+
 @app.route('/admin/health')
 def check_health():
 
-    admin_password = request.headers.get('admin-password')
-    if admin_password != envars.admin_password:
-        return {
-            "status": "error",
-            "message": "Invalid admin password"
-        }, 400
+    if require_admin_password:
+        admin_password_provided = request.headers.get('admin-password')
+        if not is_admin_password_valid(admin_password_provided):
+            return invalid_admin_password_message, 401
 
     telegram_health = telegram.check_webhook_health()
 
@@ -766,22 +794,37 @@ def check_health():
 
 
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
-def create_new_beta_codes():
+def beta_codes_route():
 
-    admin_password = request.headers.get('admin-password')
-    if admin_password != envars.admin_password:
-        return {
-            "status": "error",
-            "message": "Invalid admin password"
-        }, 401
+    if require_admin_password:
+        admin_password_provided = request.headers.get('admin-password')
+        if not is_admin_password_valid(admin_password_provided):
+            return invalid_admin_password_message, 401
 
     if request.method == 'POST':
+        # This creates a new beta code
 
         # Check that we have been sent JSON
         telegram_beta_link_uri = f"{telegram_invite_link_uri}?start="
 
+        # Get the number of codes and check it's an integer
         number_of_codes = request.json.get('number_of_codes')
+        if not number_of_codes:
+            return {
+                "status": "error",
+                "message": "No number_of_codes provided"
+            }, 400
 
+        # Check that number of codes is an integer
+        try:
+            number_of_codes = int(number_of_codes)
+        except:
+            return {
+                "status": "error",
+                "message": "number_of_codes must be an integer"
+            }, 400
+
+        # Create the codes
         list_of_codes = []
         for i in range(number_of_codes):
             new_code = secrets.token_hex(5)
