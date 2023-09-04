@@ -758,7 +758,7 @@ invalid_admin_password_message = {
 }
 
 # VERY IMPORTANT THIS IS SET TO TRUE IN DEPLOYMENT
-require_admin_password = False
+require_admin_password = True
 
 
 @app.route('/admin')
