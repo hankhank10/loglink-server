@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Loglink Admin</title>
         <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     </head>
 
@@ -16,7 +17,24 @@
                 <p class="text-3xl font-bold mt-5">Admin Dashboard</p>
 
                 <p class="text-xl font-bold mt-3">Health check</p>
-                <a class="ml-6 text-sm mt-1 text-blue-600 " href="/admin/health">Check</a></li>
+
+                {% if health_status.server.ok %}
+                <p class="ml-3 text-sm mt-1">🟢 Server</p>
+                {% else %}
+                <p class="ml-3 text-sm mt-1">🔴 Server</p>
+                {% endif %}
+
+                {% if health_status.database %}
+                <p class="ml-3 text-sm mt-1">🟢 Database</p>
+                {% else %}
+                <p class="ml-3 text-sm mt-1">🔴 Database</p>
+                {% endif %}
+
+                {% if health_status.telegram_webhook %}
+                <p class="ml-3 text-sm mt-1">🟢 Telegram webhook</p>
+                {% else %}
+                <p class="ml-3 text-sm mt-1">🔴 Telegram webhook</p>
+                {% endif %}
             </div>
         </div>
     </body>

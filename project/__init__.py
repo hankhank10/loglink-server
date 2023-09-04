@@ -758,7 +758,7 @@ invalid_admin_password_message = {
 }
 
 # VERY IMPORTANT THIS IS SET TO TRUE IN DEPLOYMENT
-require_admin_password = True
+require_admin_password = False
 
 
 @app.route('/admin')
@@ -768,7 +768,10 @@ def admin_home():
         if not is_admin_password_valid(admin_password_provided):
             return invalid_admin_password_message, 401
 
-    return render_template('admin_home.html')
+    return render_template(
+        'admin_home.html',
+        health_status=check_health(),
+    )
 
 
 @app.route('/admin/health')
