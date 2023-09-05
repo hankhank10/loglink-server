@@ -268,7 +268,7 @@ def random_token(token_type=None):
     return "unknown"+secrets.token_hex(token_length)
 
 
-def user_can_upload_to_cloud(user_id):
+def is_user_able_to_upload_to_cloud(user_id):
     # Check that the user both exists and has an imgbb key associated with their account
 
     user = User.query.filter_by(id=user_id).first()
