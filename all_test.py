@@ -1,5 +1,6 @@
 import pytest
 import logging
+import requests
 
 from project import app
 from project import telegram
@@ -55,6 +56,12 @@ def send_valid_message(
             json=telegram_webhook
         )
         return response
+
+
+def test_internet_is_connected():
+    # None of these tests will run correctly if the internet is not corrected
+    r = requests.get("https://www.google.com")
+    assert r.status_code == 200, "None of these tests will run correctly if the internet is not corrected"
 
 
 def test_maximum_input_length():
