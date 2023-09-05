@@ -37,7 +37,7 @@ If you are interested in either (after reading the important security disclaimer
 For potential collaborators, the tech stack is:
 - Python/Flask/SQLAlchemy on the backend (which I have covered, although anyone with encryption/security experience would be very welcome);
 - JS for the plugin (which I could dearly use some assistance with);
-- the front end web app/landing page will be build in HTML+Tailwind (again, help very much appreciated here).
+- the front end web app/landing page will be built in HTML+Tailwind (again, help very much appreciated here).
 
 - The service will be free to begin with. I have no aim to run this commercially, although at some point I may have to charge a nominal fee in due course if I start to incur costs (eg for whatsapp or imgur API usage beyond the free plans).
 

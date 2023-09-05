@@ -1,9 +1,9 @@
 # This replaces secretstuff.py and is used to fetch environment variables
 
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
-import os
 
 # Whatsapp credentials
 whatsapp_token = os.environ.get("WHATSAPP_TOKEN")
@@ -23,12 +23,12 @@ imgbb_api_key = os.environ.get("IMGBB_API_KEY")
 # Telegram credentials
 telegram_bot_name = os.environ.get("TELEGRAM_BOT_NAME")
 telegram_token = os.environ.get("TELEGRAM_TOKEN")
-telegram_full_token = "bot"+telegram_token
+telegram_full_token = f"bot{telegram_token}"
 telegram_webhook_auth = os.environ.get("TELEGRAM_WEBHOOK_AUTH")
 
 # Sentry
 sentry_dsn = os.environ.get("SENTRY_DSN")
 
 # Admin password
+admin_username = "admin"
 admin_password = os.environ.get("ADMIN_PASSWORD")
-

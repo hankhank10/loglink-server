@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import sentry_sdk
 
 # Import flask
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Flask, render_template, request, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -44,12 +44,13 @@ migrate = Migrate(app, db)
 
 # Define global paths and uris
 app_uri = "https://loglink.it/"
-security_disclaimer_api = f"{app_uri}/security-notice/"
+security_disclaimer_api = f"{app_uri}security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
 telegram_invite_link_uri = f"https://t.me/{envars.telegram_bot_name}"
+plugin_url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
 
-latest_plugin_version = "0.0.0"
+latest_plugin_version = "0.0.0"  # default, will be updated
 latest_plugin_version_last_checked = datetime.now()
 
 # Global app settings
@@ -59,8 +60,8 @@ creating_db = False
 
 # Image upload services
 image_upload_service = "imgbb"
-if image_upload_service == "imgur":
-    from . import imgur
+# if image_upload_service == "imgur":
+#    from . import imgur
 if image_upload_service == "imgbb":
     from . import imgbb
 
@@ -107,7 +108,7 @@ media_urls = {
 # This server was originally planned to support both Telegram and Whatsapp. Telegram is required, Whatsapp is actually not implemented.
 valid_providers = ['telegram']
 
-# Telegram settings
+# Beta settings
 telegram_require_beta_code = True
 
 
@@ -177,9 +178,8 @@ def calculate_version_number(version):
 def get_latest_plugin_version():
     # Gets the latest version of the loglink pulgin from github - if you are self deploying this or using a custom plugin then you may want to change this
 
-    url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
     logging.info("Getting latest plugin version from Github API")
-    response = requests.get(url)
+    response = requests.get(plugin_url)
     if response.status_code == 200:
         response = response.json()
         version = response['tag_name']
@@ -204,9 +204,11 @@ def list_of_beta_codes():
 def use_beta_code(beta_code):
     # "Uses" a beta code by deleting it from the directory
     if beta_code in list_of_beta_codes():
+        logging.info(f"Using beta code: {beta_code}")
         os.remove(f"{beta_codes_folder}/{beta_code}.txt")
         return True
     else:
+        logging.warn(f"Beta code not found: {beta_code}")
         return False
 
 
@@ -242,6 +244,7 @@ def delete_delivered_messages(user_id=None):
     try:
         db.session.commit()
     except:
+        logging.warn(f"Error deleting delivered messages for user {user_id}")
         return False
     return True
 
@@ -256,6 +259,7 @@ def delete_all_messages(user_id):
     try:
         db.session.commit()
     except:
+        logging.warn(f"Error deleting messages for user {user_id}")
         return False
     return True
 
@@ -268,7 +272,7 @@ def random_token(token_type=None):
     return "unknown"+secrets.token_hex(token_length)
 
 
-def user_can_upload_to_cloud(user_id):
+def is_user_able_to_upload_to_cloud(user_id):
     # Check that the user both exists and has an imgbb key associated with their account
 
     user = User.query.filter_by(id=user_id).first()
@@ -288,6 +292,8 @@ def create_new_user(
 ):
 
     if provider not in valid_providers:
+        logging.error(
+            f"Failed to create a user with provider {provider} because it was not in the provider list")
         return False
 
     if provider == 'telegram':
@@ -307,9 +313,12 @@ def create_new_user(
         provider=provider,
         approved=approved
     )
-    db.session.add(new_user)
-    db.session.commit()
-    return new_user
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return new_user
+    except:
+        return False
 
 
 def add_new_message(
@@ -393,7 +402,7 @@ def compose_image_message_contents(
     if require_user_to_have_own_cloud_account:
         # At the moment only imgbb is implemented
         if not imgbb_api_key:
-            logging.error("No imgbb API key provided")
+            logging.error("No imgbb API key provided when one was required")
             return False
 
     # Upload the image to the cloud service
@@ -405,9 +414,8 @@ def compose_image_message_contents(
         )
     else:
         # If image_upload_service is not set to something we recognise then return False
-        return False
-
-    if not image_upload_result:
+        logging.error(
+            f"Could not upload image to service {image_upload_service} because it was not a recognised service")
         return False
 
     if image_upload_result:
@@ -418,6 +426,7 @@ def compose_image_message_contents(
         else:
             message_contents = image_upload_result
     else:
+        logging.error("Could not upload image - something went wrong")
         return False
 
     return message_contents
@@ -427,15 +436,21 @@ def set_user_imgbb_api_key(user_id, imgbb_api_key):
 
     # Check that we are even using imgbb for cloud image storage
     if image_upload_service != "imgbb":
+        logging.error(
+            "Tried to add an imgbb_api_key to a user, but we are not using imgbb")
         return False
 
     # Check that the user exists
     user = User.query.filter_by(id=user_id).first()
     if not user:
+        logging.error(
+            f"Tried to add an imgbb_api_key to user {user_id} but that user was not found")
         return False
 
     # Check the token is valid
-    if not imgbb.api_key_valid(imgbb_api_key):
+    if not imgbb.is_api_key_valid(imgbb_api_key):
+        logging.error(
+            f"Tried to add imgbb_api_key {imgbb_api_key} but it was not valid")
         return False
 
     # Set the user's imgbb api key
@@ -744,29 +759,39 @@ def check_db():
 
 
 def is_admin_password_valid(
-    password_provided
+    admin_username,
+    admin_password
 ):
-    if password_provided == envars.admin_password:
-        return True
-    else:
+
+    if admin_username != envars.admin_username:
         return False
+    if admin_password != envars.admin_password:
+        return False
+    return True
 
 
-invalid_admin_password_message = {
-    "status": "error",
-    "message": "Invalid admin password"
-}
+def prompt_to_authenticate():
+    # Send a 401 response with a request to authenticate
+    return Response(
+        'Login Required', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
 
-# VERY IMPORTANT THIS IS SET TO TRUE IN DEPLOYMENT
-require_admin_password = True
+
+@app.route('/admin/logout')
+def logout():
+    # Send an 401 response to log the user out.
+    return Response(
+        'Logout', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
 
 
 @app.route('/admin')
 def admin_home():
-    if require_admin_password:
-        admin_password_provided = request.headers.get('admin-password')
-        if not is_admin_password_valid(admin_password_provided):
-            return invalid_admin_password_message, 401
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
 
     return render_template(
         'admin_home.html',
@@ -776,11 +801,9 @@ def admin_home():
 
 @app.route('/admin/health')
 def check_health():
-
-    if require_admin_password:
-        admin_password_provided = request.headers.get('admin-password')
-        if not is_admin_password_valid(admin_password_provided):
-            return invalid_admin_password_message, 401
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
 
     telegram_health = telegram.check_webhook_health()
 
@@ -795,11 +818,9 @@ def check_health():
 
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
 def beta_codes_route():
-
-    if require_admin_password:
-        admin_password_provided = request.headers.get('admin-password')
-        if not is_admin_password_valid(admin_password_provided):
-            return invalid_admin_password_message, 401
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
 
     if request.method == 'POST':
         # This creates a new beta code
