@@ -5,7 +5,9 @@ from project import app
 from project import telegram
 from project import envars
 
-from project import User, Message, require_admin_password
+from project import User, Message
+
+import base64
 
 import project
 from random import randint
@@ -84,56 +86,71 @@ list_of_admin_get_routes_to_check = [
     '/admin/beta_codes',
 ]
 
+# In the later tests we will be using valid and invalid credentials
+valid_credentials = base64.b64encode(
+    f'{envars.admin_username}:{envars.admin_password}'.encode('utf-8')).decode('utf-8')
+invalid_credentials = base64.b64encode(
+    b'admin:wrong_password').decode('utf-8')
 
-def test_admin_password_required():
-    # Check that admin_password_required is set to True
-    assert require_admin_password is True
+
+def test_admin_get_routes_with_no_security_fail():
+    # Check that the admin routes can't be accessed without sending any credentials
+
+    for route in list_of_admin_get_routes_to_check:
+        with app.test_client() as client:
+            response = client.get(
+                route
+            )
+            assert response.status_code == 401 or response.status_code == 400
 
 
 def test_admin_get_routes_with_bad_security_fail():
-    # Check that the admin routes can't be accessed without the right password
+    # Check that the admin routes can't be accessed without the right credentials
 
     for route in list_of_admin_get_routes_to_check:
         with app.test_client() as client:
             response = client.get(
                 route,
-                headers={"admin-password": "wrong_password"}
+                headers={"Authorization": f"Basic {invalid_credentials}"}
             )
             assert response.status_code == 401 or response.status_code == 400
-            assert b'error' in response.data
 
 
 def test_admin_get_routes_with_good_security_pass():
     # Check that the admin routes can be accessed with the right password
 
+    # Encode the correct credentials for authentication
+    credentials = base64.b64encode(
+        f'{envars.admin_username}:{envars.admin_password}'.encode('utf-8')).decode('utf-8')
+
     for route in list_of_admin_get_routes_to_check:
         with app.test_client() as client:
             response = client.get(
                 route,
-                headers={"admin-password": envars.admin_password}
+                headers={"Authorization": f"Basic {valid_credentials}"}
             )
             assert response.status_code == 200
-            assert b'error' not in response.data
 
 
 def test_beta_code_security_post_fail():
     # Check that beta codes can't be added without the right password
     with app.test_client() as client:
+        credentials = base64.b64encode(b'admin:wrong_password').decode('utf-8')
         response = client.post(
             '/admin/beta_codes',
-            headers={"admin-password": "wrong_password"},
+            headers={"Authorization": f"Basic {invalid_credentials}"},
             json={"number_of_codes": 1}
         )
         assert response.status_code == 401
-        assert b'error' in response.data
 
 
 def test_beta_code_valid():
     # Check that a beta code can be created when the password is valid
+
     with app.test_client() as client:
         response = client.post(
             '/admin/beta_codes',
-            headers={"admin-password": envars.admin_password},
+            headers={"Authorization": f"Basic {valid_credentials}"},
             json={"number_of_codes": 1}
         )
         assert response.status_code == 200
@@ -149,7 +166,7 @@ def test_beta_code_not_string_fail():
     with app.test_client() as client:
         response = client.post(
             '/admin/beta_codes',
-            headers={"admin-password": envars.admin_password},
+            headers={"Authorization": f"Basic {valid_credentials}"},
             json={"number_of_codes": "not_a_number"}
         )
         assert response.status_code == 400
@@ -189,7 +206,7 @@ def test_create_user_valid():
     with app.test_client() as client:
         response = client.post(
             '/admin/beta_codes',
-            headers={"admin-password": envars.admin_password},
+            headers={"Authorization": f"Basic {valid_credentials}"},
             json={"number_of_codes": 1}
         )
         assert response.status_code == 200

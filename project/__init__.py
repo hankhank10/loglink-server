@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import sentry_sdk
 
 # Import flask
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
@@ -744,29 +744,39 @@ def check_db():
 
 
 def is_admin_password_valid(
-    password_provided
+    admin_username,
+    admin_password
 ):
-    if password_provided == envars.admin_password:
-        return True
-    else:
+
+    if admin_username != envars.admin_username:
         return False
+    if admin_password != envars.admin_password:
+        return False
+    return True
 
 
-invalid_admin_password_message = {
-    "status": "error",
-    "message": "Invalid admin password"
-}
+def prompt_to_authenticate():
+    # Send a 401 response with a request to authenticate
+    return Response(
+        'Login Required', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
 
-# VERY IMPORTANT THIS IS SET TO TRUE IN DEPLOYMENT
-require_admin_password = True
+
+@app.route('/admin/logout')
+def logout():
+    # Send an 401 response to log the user out.
+    return Response(
+        'Logout', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
 
 
 @app.route('/admin')
 def admin_home():
-    if require_admin_password:
-        admin_password_provided = request.headers.get('admin-password')
-        if not is_admin_password_valid(admin_password_provided):
-            return invalid_admin_password_message, 401
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
 
     return render_template(
         'admin_home.html',
@@ -776,11 +786,9 @@ def admin_home():
 
 @app.route('/admin/health')
 def check_health():
-
-    if require_admin_password:
-        admin_password_provided = request.headers.get('admin-password')
-        if not is_admin_password_valid(admin_password_provided):
-            return invalid_admin_password_message, 401
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
 
     telegram_health = telegram.check_webhook_health()
 
@@ -795,11 +803,9 @@ def check_health():
 
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
 def beta_codes_route():
-
-    if require_admin_password:
-        admin_password_provided = request.headers.get('admin-password')
-        if not is_admin_password_valid(admin_password_provided):
-            return invalid_admin_password_message, 401
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
 
     if request.method == 'POST':
         # This creates a new beta code
