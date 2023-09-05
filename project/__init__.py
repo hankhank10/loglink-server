@@ -44,7 +44,7 @@ migrate = Migrate(app, db)
 
 # Define global paths and uris
 app_uri = "https://loglink.it/"
-security_disclaimer_api = f"{app_uri}/security-notice/"
+security_disclaimer_api = f"{app_uri}security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
 telegram_invite_link_uri = f"https://t.me/{envars.telegram_bot_name}"
