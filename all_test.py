@@ -58,10 +58,15 @@ def send_valid_message(
         return response
 
 
-def test_internet_is_connected():
+def check_internet_connection():
     # None of these tests will run correctly if the internet is not corrected
     r = requests.get("https://www.google.com")
-    assert r.status_code == 200, "None of these tests will run correctly if the internet is not corrected"
+    if r.status_code == 200:
+        return True
+    return False
+
+
+is_internet_connected = check_internet_connection()
 
 
 def test_index_get_ok():
