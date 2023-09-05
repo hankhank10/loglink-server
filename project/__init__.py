@@ -178,9 +178,8 @@ def calculate_version_number(version):
 def get_latest_plugin_version():
     # Gets the latest version of the loglink pulgin from github - if you are self deploying this or using a custom plugin then you may want to change this
 
-    url = plugin_url
     logging.info("Getting latest plugin version from Github API")
-    response = requests.get(url)
+    response = requests.get(plugin_url)
     if response.status_code == 200:
         response = response.json()
         version = response['tag_name']
@@ -205,9 +204,11 @@ def list_of_beta_codes():
 def use_beta_code(beta_code):
     # "Uses" a beta code by deleting it from the directory
     if beta_code in list_of_beta_codes():
+        logging.info(f"Using beta code: {beta_code}")
         os.remove(f"{beta_codes_folder}/{beta_code}.txt")
         return True
     else:
+        logging.warn(f"Beta code not found: {beta_code}")
         return False
 
 
@@ -243,6 +244,7 @@ def delete_delivered_messages(user_id=None):
     try:
         db.session.commit()
     except:
+        logging.warn(f"Error deleting delivered messages for user {user_id}")
         return False
     return True
 
@@ -257,6 +259,7 @@ def delete_all_messages(user_id):
     try:
         db.session.commit()
     except:
+        logging.warn(f"Error deleting messages for user {user_id}")
         return False
     return True
 
@@ -289,6 +292,8 @@ def create_new_user(
 ):
 
     if provider not in valid_providers:
+        logging.error(
+            f"Failed to create a user with provider {provider} because it was not in the provider list")
         return False
 
     if provider == 'telegram':
@@ -308,9 +313,12 @@ def create_new_user(
         provider=provider,
         approved=approved
     )
-    db.session.add(new_user)
-    db.session.commit()
-    return new_user
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return new_user
+    except:
+        return False
 
 
 def add_new_message(
