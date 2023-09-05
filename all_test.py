@@ -64,13 +64,6 @@ def test_internet_is_connected():
     assert r.status_code == 200, "None of these tests will run correctly if the internet is not corrected"
 
 
-def test_maximum_input_length():
-    # Create a very long message (e.g., 1000 characters)
-    long_message = "A" * 10000
-    response = send_valid_message(long_message)
-    assert response.status_code == 200, "Expected 200 OK but got another response."
-
-
 def test_index_get_ok():
     # Check that the API is running
     with app.test_client() as client:
@@ -98,6 +91,9 @@ valid_credentials = base64.b64encode(
     f'{envars.admin_username}:{envars.admin_password}'.encode('utf-8')).decode('utf-8')
 invalid_credentials = base64.b64encode(
     b'admin:wrong_password').decode('utf-8')
+
+# We will test that it is not possible to send a message with a nonexistent ID
+nonsense_id = "an_id_that_definitely_does_not_exist"
 
 
 def test_admin_get_routes_with_no_security_fail():
@@ -181,12 +177,12 @@ def test_beta_code_not_string_fail():
 
 
 def test_get_new_messages_fail():
-    # Check that a nonsense response fails
+    # Check that a response with a nonsense id fails
     with app.test_client() as client:
         response = client.post(
             '/get_new_messages/',
             json={
-                "user_id": "an_id_that_definitely_does_not_exist",
+                "user_id": nonsense_id,
             }
         )
         assert response.status_code == 404
@@ -253,13 +249,20 @@ def test_create_new_message_valid():
     assert len(messages) == 1
 
 
+def test_maximum_input_length():
+    # Create a very long message (e.g., 1000 characters)
+    long_message = "A" * 10000
+    response = send_valid_message(long_message)
+    assert response.status_code == 200, "Expected 200 OK but got another response."
+
+
 def test_retrieve_message_fail():
-    # Check that a nonsense response fails
+    # Check that a response with a nonsense id fails
     with app.test_client() as client:
         response = client.post(
             '/get_new_messages/',
             json={
-                "user_id": "an_id_that_definitely_does_not_exist",
+                "user_id": nonsense_id,
             }
         )
         assert response.status_code == 404
