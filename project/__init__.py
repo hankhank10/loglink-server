@@ -402,7 +402,7 @@ def compose_image_message_contents(
     if require_user_to_have_own_cloud_account:
         # At the moment only imgbb is implemented
         if not imgbb_api_key:
-            logging.error("No imgbb API key provided")
+            logging.error("No imgbb API key provided when one was required")
             return False
 
     # Upload the image to the cloud service
@@ -414,9 +414,8 @@ def compose_image_message_contents(
         )
     else:
         # If image_upload_service is not set to something we recognise then return False
-        return False
-
-    if not image_upload_result:
+        logging.error(
+            f"Could not upload image to service {image_upload_service} because it was not a recognised service")
         return False
 
     if image_upload_result:
@@ -427,6 +426,7 @@ def compose_image_message_contents(
         else:
             message_contents = image_upload_result
     else:
+        logging.error("Could not upload image - something went wrong")
         return False
 
     return message_contents
@@ -436,15 +436,21 @@ def set_user_imgbb_api_key(user_id, imgbb_api_key):
 
     # Check that we are even using imgbb for cloud image storage
     if image_upload_service != "imgbb":
+        logging.error(
+            "Tried to add an imgbb_api_key to a user, but we are not using imgbb")
         return False
 
     # Check that the user exists
     user = User.query.filter_by(id=user_id).first()
     if not user:
+        logging.error(
+            f"Tried to add an imgbb_api_key to user {user_id} but that user was not found")
         return False
 
     # Check the token is valid
-    if not imgbb.api_key_valid(imgbb_api_key):
+    if not imgbb.is_api_key_valid(imgbb_api_key):
+        logging.error(
+            f"Tried to add imgbb_api_key {imgbb_api_key} but it was not valid")
         return False
 
     # Set the user's imgbb api key

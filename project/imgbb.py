@@ -41,7 +41,7 @@ def upload_image(
     return image_url
 
 
-def api_key_valid(user_api_token):
+def is_api_key_valid(user_api_token):
     if not user_api_token:
         return False
 
