@@ -1,3 +1,4 @@
+from sentry_sdk.integrations.flask import FlaskIntegration
 import os
 import glob
 import requests
@@ -6,6 +7,8 @@ from datetime import datetime, time, timedelta
 import secrets
 import logging
 from dataclasses import dataclass
+
+from .mailman import send_email, send_onboarding_email
 
 import sentry_sdk
 
@@ -18,7 +21,6 @@ from flask_migrate import Migrate
 from . import envars
 
 # Sentry for error logging
-from sentry_sdk.integrations.flask import FlaskIntegration
 # Disable this if you have self deployed and don't want to send errors to Sentry
 sentry_logging = True
 if sentry_logging:
@@ -816,6 +818,55 @@ def check_health():
     }
 
 
+@app.get('/admin/send_beta_code_to_new_user')
+def send_beta_code_to_new_user():
+    # This is a route for the admin to onboard a user by sending them a new beta code - it is an API route that accepts a post request with JSON with the user's email address and sends the onboarding email
+
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
+
+    # Check that we have got data from the form
+    user_email = request.json.get('user_email')
+    if not user_email:
+        return {
+            "status": "error",
+            "message": "No user_email provided"
+        }, 400
+
+    # Generate a new beta code
+    beta_code = create_beta_code()
+    if not beta_code:
+        return {
+            "status": "error",
+            "message": "Failed to create beta code"
+        }, 500
+
+    # Send the onboarding email
+    onboarding_email_sent = send_onboarding_email(
+        user_email,
+        beta_code
+    )
+    if not onboarding_email_sent:
+        return {
+            "status": "error",
+            "message": "Failed to send onboarding email"
+        }, 500
+    return {
+        "status": "success",
+        "message": f"Onboarding email sent to {user_email}"
+    }
+
+
+def create_beta_code():
+    new_code = secrets.token_hex(5)
+    try:
+        open(f"{beta_codes_folder}/{new_code}.txt", "w").close()
+        return new_code
+    except:
+        return False
+
+
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
 def beta_codes_route():
     auth = request.authorization
@@ -848,9 +899,7 @@ def beta_codes_route():
         # Create the codes
         list_of_codes = []
         for i in range(number_of_codes):
-            new_code = secrets.token_hex(5)
-            open(f"{beta_codes_folder}/{new_code}.txt", "w").close()
-            list_of_codes.append(new_code)
+            list_of_codes.append(create_beta_code())
 
         return {
             "status": "success",

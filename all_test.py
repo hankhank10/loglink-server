@@ -89,7 +89,7 @@ def test_index_post_fail():
 list_of_admin_get_routes_to_check = [
     '/admin',
     '/admin/health',
-    '/admin/beta_codes',
+    '/admin/beta_codes'
 ]
 
 # In the later tests we will be using valid and invalid credentials

@@ -32,3 +32,9 @@ sentry_dsn = os.environ.get("SENTRY_DSN")
 # Admin password
 admin_username = "admin"
 admin_password = os.environ.get("ADMIN_PASSWORD")
+
+# Email credentials
+email_setting_host = os.environ.get("EMAIL_SETTING_HOST")
+email_setting_port = os.environ.get("EMAIL_SETTING_PORT")
+email_setting_username = os.environ.get("EMAIL_SETTING_USERNAME")
+email_setting_password = os.environ.get("EMAIL_SETTING_PASSWORD")
