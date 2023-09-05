@@ -23,7 +23,7 @@ imgbb_api_key = os.environ.get("IMGBB_API_KEY")
 # Telegram credentials
 telegram_bot_name = os.environ.get("TELEGRAM_BOT_NAME")
 telegram_token = os.environ.get("TELEGRAM_TOKEN")
-telegram_full_token = "bot"+telegram_token
+telegram_full_token = f"bot{telegram_token}"
 telegram_webhook_auth = os.environ.get("TELEGRAM_WEBHOOK_AUTH")
 
 # Sentry
