@@ -1,9 +1,8 @@
 import logging
 import secrets
 import requests
-import pprint
 import pprint  # for debug
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Flask, request
 
 from . import app
 from . import add_new_message, compose_location_message_contents, compose_image_message_contents
@@ -133,8 +132,6 @@ def send_telegram_picture_message(
 def telegram_webhook():
 
     if request.method == 'POST':
-
-        # pprint.pprint(request.json)
 
         # Check the headers
         auth_token_received_from_webhook = request.headers.get(
