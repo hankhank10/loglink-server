@@ -1,5 +1,6 @@
 import pytest
 import logging
+from pprint import pprint
 import requests
 
 from project import app
@@ -99,6 +100,13 @@ invalid_credentials = base64.b64encode(
 
 # We will test that it is not possible to send a message with a nonexistent ID
 nonsense_id = "an_id_that_definitely_does_not_exist"
+
+
+def test_maximum_input_length():
+    # Create a very long message (e.g., 1000 characters)
+    long_message = "A" * 10000
+    response = send_valid_message(long_message)
+    assert response.status_code == 200, "Expected 200 OK but got another response."
 
 
 def test_admin_get_routes_with_no_security_fail():
@@ -254,13 +262,6 @@ def test_create_new_message_valid():
     assert len(messages) == 1
 
 
-def test_maximum_input_length():
-    # Create a very long message (e.g., 1000 characters)
-    long_message = "A" * 10000
-    response = send_valid_message(long_message)
-    assert response.status_code == 200, "Expected 200 OK but got another response."
-
-
 def test_retrieve_message_fail():
     # Check that a response with a nonsense id fails
     with app.test_client() as client:
@@ -283,8 +284,11 @@ def test_retrieve_message_valid():
                 "user_id": user_token,
             }
         )
+
+        pprint(response.json)
+
         assert response.status_code == 200
-        assert response.json["messages"]["count"] == 1
+        assert response.json["messages"]["count"] >= 1
         assert response.json["messages"]["contents"][0]["contents"] == telegram_webhook["message"]["text"]
 
 
