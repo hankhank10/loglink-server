@@ -48,8 +48,9 @@ security_disclaimer_api = f"{app_uri}security-notice/"
 media_uploads_folder = "media_uploads"
 beta_codes_folder = "beta_codes"
 telegram_invite_link_uri = f"https://t.me/{envars.telegram_bot_name}"
+plugin_url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
 
-latest_plugin_version = "0.0.0"
+latest_plugin_version = "0.0.0"  # default, will be updated
 latest_plugin_version_last_checked = datetime.now()
 
 # Global app settings
@@ -59,8 +60,8 @@ creating_db = False
 
 # Image upload services
 image_upload_service = "imgbb"
-if image_upload_service == "imgur":
-    from . import imgur
+# if image_upload_service == "imgur":
+#    from . import imgur
 if image_upload_service == "imgbb":
     from . import imgbb
 
@@ -107,7 +108,7 @@ media_urls = {
 # This server was originally planned to support both Telegram and Whatsapp. Telegram is required, Whatsapp is actually not implemented.
 valid_providers = ['telegram']
 
-# Telegram settings
+# Beta settings
 telegram_require_beta_code = True
 
 
@@ -177,7 +178,7 @@ def calculate_version_number(version):
 def get_latest_plugin_version():
     # Gets the latest version of the loglink pulgin from github - if you are self deploying this or using a custom plugin then you may want to change this
 
-    url = "https://api.github.com/repos/hankhank10/loglink-plugin/releases/latest"
+    url = plugin_url
     logging.info("Getting latest plugin version from Github API")
     response = requests.get(url)
     if response.status_code == 200:
