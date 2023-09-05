@@ -34,6 +34,7 @@ telegram_api_url = f"{telegram_base_api_url}/{envars.telegram_full_token}"
 
 provider = 'telegram'
 
+# These messages require special treatment
 command_list = [
     '/start',
     "/help",
@@ -60,9 +61,10 @@ def download_file_from_telegram(
 ):
 
     if not save_name:
+        # Create a random save name if one is not provided
         save_name = secrets.token_hex(16) + "." + extension
 
-    # Download the image
+    # Download the file
     url = f"{telegram_base_api_url}/file/{envars.telegram_full_token}/{file_path}"
     r = requests.get(url)
 
@@ -70,9 +72,11 @@ def download_file_from_telegram(
         file_save_path = f"{media_uploads_folder}/{save_name}"
         with open(file_save_path, 'wb') as f:
             f.write(r.content)
+        logging.info("File successfully downloaded from Telegram")
 
         return save_name
     else:
+        logging.error("Error downloading file from Telegram")
         return False
 
 
@@ -81,6 +85,8 @@ def send_telegram_message(
         message_contents,
         disable_notification=False,
 ):
+    # This sends a message from the server to the Telegram user
+
     message_contents = escape_markdown(message_contents)
 
     payload = {
@@ -92,11 +98,12 @@ def send_telegram_message(
     url = telegram_api_url + '/sendMessage'
 
     response = requests.post(url, json=payload)
-    logging.info("Message sent to Telegram webhook")
 
     if response.status_code == 200:
+        logging.info("Message sent to Telegram webhook")
         return True
     else:
+        logging.error("Error sending message to Telegram user")
         return False
 
 
@@ -128,7 +135,7 @@ def send_telegram_picture_message(
         return False
 
 
-@app.route('/telegram/webhook/', methods=['POST'])
+@app.post('/telegram/webhook/')
 def telegram_webhook():
 
     if request.method == 'POST':
@@ -168,10 +175,10 @@ def telegram_webhook():
                 'mobile': data['message']['from']['id'],
             }
         except:
-            logging.error("Error parsing JSON")
+            logging.error("Error parsing JSON received from Telegram")
             return {
                 'status': 'error',
-                'message': 'Telegram webhook JSON could not be parsed'
+                'message': 'JSON received from Telegram webhook could not be parsed'
             }, 401
 
         # Check if this is a new user and if so run the onboarding workflow
@@ -189,8 +196,10 @@ def telegram_webhook():
                         beta_code=beta_code_provided,
                     )
                     if result:
+                        logging.info("New user successfully onboarded")
                         return "ok", 200
                     else:
+                        logging.error("Error onboarding user")
                         return "error onboarding", 400
                 send_message(
                     provider=provider,
