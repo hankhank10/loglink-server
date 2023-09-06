@@ -22,7 +22,7 @@ from . import envars
 
 # Sentry for error logging
 # Disable this if you have self deployed and don't want to send errors to Sentry
-sentry_logging = True
+sentry_logging = False
 if sentry_logging:
     if envars.sentry_dsn:
         sentry_sdk.init(
@@ -818,7 +818,7 @@ def check_health():
     }
 
 
-@app.get('/admin/send_beta_code_to_new_user')
+@app.post('/admin/send_beta_code_to_new_user')
 def send_beta_code_to_new_user():
     # This is a route for the admin to onboard a user by sending them a new beta code - it is an API route that accepts a post request with JSON with the user's email address and sends the onboarding email
 
