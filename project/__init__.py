@@ -801,6 +801,18 @@ def admin_home():
     )
 
 
+def is_internet_connected():
+    try:
+        r = requests.get("https://google.com")
+    except:
+        return False
+
+    if r.status_code == 200:
+        return True
+    else:
+        return False
+
+
 @app.route('/admin/health')
 def check_health():
     auth = request.authorization
@@ -814,6 +826,7 @@ def check_health():
             'ok': True
         },
         'database': check_db(),
+        'internet': is_internet_connected(),
         'telegram_webhook': telegram.check_webhook_health()
     }
 
