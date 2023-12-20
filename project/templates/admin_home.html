@@ -83,11 +83,23 @@
 				<div>
 					<textarea class="px-4 py-2 border rounded w-full mb-4" placeholder="Enter service message"
 						x-model="service_message" @input="validateMessage"></textarea>
-					<button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-						:class="{'opacity-50 cursor-not-allowed': !isValidMessage}"
-						:disabled="!isValidMessage" @click="send_service_message()">
-						Send Service Message
-					</button>
+					<div x-show="!showConfirmButton">
+						<button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+							:class="{'opacity-50 cursor-not-allowed': !isValidMessage}"
+							:disabled="!isValidMessage" @click="showConfirmButton = true">
+							Send Service Message
+						</button>
+					</div>
+					<div x-show="showConfirmButton" class="flex mt-2">
+						<button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+							@click="send_service_message()">
+							Definitely send?
+						</button>
+						<button class="ml-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+							@click="showConfirmButton = false">
+							Wait, cancel
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -131,6 +143,7 @@
 				return {
 					service_message: '',
 					isValidMessage: false,
+					showConfirmButton: false,
 
 					validateMessage() {
 						this.isValidMessage = this.service_message.length > 0;
@@ -142,19 +155,17 @@
 							headers: {
 								'Content-Type': 'application/json',
 							},
-							body: JSON.stringify({ message: this.service_message })
+							body: JSON.stringify({ contents: this.service_message })
 						})
 							.then(response => response.json())
 							.then(data => {
-								if (data.success) {
-									alert('Service message sent successfully!');
-								} else {
-									alert('Failed to send service message.');
-								}
+								alert(data.message);
 							})
 							.catch((error) => {
+								alert('Error sending service message');
 								console.error('Error:', error);
 							});
+						this.showConfirmButton = false;
 					}
 				}
 			}
