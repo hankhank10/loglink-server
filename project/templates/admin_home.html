@@ -65,9 +65,12 @@
 				</p>
 				<div>
 					<input class="px-4 py-2 border rounded w-full mb-4" placeholder="Enter email address"
-						type="email" x-model="user_email" />
-					<button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-						@click="send_email()">
+						type="email" x-model="user_email" @input="validateEmail" />
+					<p class="text-red-500" x-show="user_email.length > 0 && !isValidEmail">Please enter a valid email
+						address.</p>
+					<button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+						:class="{'opacity-50 cursor-not-allowed': !isValidEmail}"
+						:disabled="!isValidEmail" @click="send_email()">
 						Send Email
 					</button>
 				</div>
@@ -77,6 +80,12 @@
 			function onboardingApp() {
 				return {
 					user_email: '',
+					isValidEmail: false,
+
+					validateEmail() {
+						const re = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/;
+						this.isValidEmail = re.test(this.user_email);
+					},
 
 					send_email() {
 						fetch('/admin/send_beta_code_to_new_user', {
