@@ -1,3 +1,4 @@
+from sentry_sdk.integrations.flask import FlaskIntegration
 import os
 import glob
 import requests
@@ -6,6 +7,8 @@ from datetime import datetime, time, timedelta
 import secrets
 import logging
 from dataclasses import dataclass
+
+from .mailman import send_email, send_onboarding_email
 
 import sentry_sdk
 
@@ -17,10 +20,11 @@ from flask_migrate import Migrate
 # Import secrets
 from . import envars
 
+from email_validator import validate_email, EmailNotValidError
+
 # Sentry for error logging
-from sentry_sdk.integrations.flask import FlaskIntegration
 # Disable this if you have self deployed and don't want to send errors to Sentry
-sentry_logging = True
+sentry_logging = False
 if sentry_logging:
     if envars.sentry_dsn:
         sentry_sdk.init(
@@ -720,6 +724,32 @@ def get_new_messages():
 # ADMIN #
 #########
 
+@app.route('/admin/send_service_message', methods=['POST'])
+def route_send_service_message():
+    # This is a route for the admin to send a service message to all users or a particular user - it is an API route that accepts a post request with JSON with the message contents and the user_id
+
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
+
+    # Check that we have got data from the form
+    contents = request.json['contents']
+    if not contents:
+        return {
+            "status": "error",
+            "message": "No contents provided"
+        }, 400
+
+    # Send the message
+    send_service_message(
+        contents
+    )
+    return {
+        "status": "success",
+        "message": "Message succesfully sent. Hope it was a good one."
+    }
+
+
 def send_service_message(
     contents,
     user_id=None
@@ -734,10 +764,10 @@ def send_service_message(
             if user.provider == "telegram":
                 telegram_provider_id_list_to_send_message_to.append(
                     user.provider_id)
-
     else:
         telegram_provider_id_list_to_send_message_to = [
-            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
+            user.provider_id for user in User.query.filter_by(provider="telegram").all()
+        ]
 
     for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
         telegram.send_telegram_message(
@@ -799,6 +829,18 @@ def admin_home():
     )
 
 
+def is_internet_connected():
+    try:
+        r = requests.get("https://google.com")
+    except:
+        return False
+
+    if r.status_code == 200:
+        return True
+    else:
+        return False
+
+
 @app.route('/admin/health')
 def check_health():
     auth = request.authorization
@@ -812,8 +854,67 @@ def check_health():
             'ok': True
         },
         'database': check_db(),
+        'internet': is_internet_connected(),
         'telegram_webhook': telegram.check_webhook_health()
     }
+
+
+@app.post('/admin/send_beta_code_to_new_user')
+def send_beta_code_to_new_user():
+    # This is a route for the admin to onboard a user by sending them a new beta code - it is an API route that accepts a post request with JSON with the user's email address and sends the onboarding email
+
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
+
+    # Check that we have got data from the form
+    user_email = request.json['user_email']
+    if not user_email:
+        return {
+            "status": "error",
+            "message": "No user_email provided"
+        }, 400
+
+    # Check that the email address received is a valid one
+    try:
+        validate_email(user_email)
+    except EmailNotValidError as e:
+        return {
+            "status": "error",
+            "message": "Invalid email address provided"
+        }, 400
+
+    # Generate a new beta code
+    beta_code = create_beta_code()
+    if not beta_code:
+        return {
+            "status": "error",
+            "message": "Failed to create beta code"
+        }, 500
+
+    # Send the onboarding email
+    onboarding_email_sent = send_onboarding_email(
+        user_email,
+        beta_code
+    )
+    if not onboarding_email_sent:
+        return {
+            "status": "error",
+            "message": "Failed to send onboarding email"
+        }, 500
+    return {
+        "status": "success",
+        "message": f"Onboarding email sent to {user_email}"
+    }
+
+
+def create_beta_code():
+    new_code = secrets.token_hex(5)
+    try:
+        open(f"{beta_codes_folder}/{new_code}.txt", "w").close()
+        return new_code
+    except:
+        return False
 
 
 @app.route('/admin/beta_codes', methods=['GET', 'POST'])
@@ -848,9 +949,7 @@ def beta_codes_route():
         # Create the codes
         list_of_codes = []
         for i in range(number_of_codes):
-            new_code = secrets.token_hex(5)
-            open(f"{beta_codes_folder}/{new_code}.txt", "w").close()
-            list_of_codes.append(new_code)
+            list_of_codes.append(create_beta_code())
 
         return {
             "status": "success",

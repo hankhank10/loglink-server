@@ -1,42 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Loglink Admin</title>
-        <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+		<title>
+			Loglink Admin
+		</title>
+		<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+		<script src="//unpkg.com/alpinejs" defer></script>
 
-    </head>
+	</head>
 
-    <body>
-        <div class="container mx-auto">
-            <div class="mt-5">
+	<body class="bg-gray-100 py-10">
+		<div class="container mx-auto px-4 md:px-0">
+			<!-- Admin Dashboard Title -->
+			<p class="text-3xl font-bold mb-6">
+				Admin Dashboard
+			</p>
+			<!-- Health Check Card -->
+			<div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+				<p class="text-xl font-bold mb-4">
+					Health Check
+				</p>
+				<ul>
 
-                <p class="text-3xl font-bold mt-5">Admin Dashboard</p>
+					<li class="mb-2">
+						{% if health_status.server.ok %}
+						✅ Server OK
+						{% else %}
+						❌ Server error
+					</li>
+					{% endif %}
 
-                <p class="text-xl font-bold mt-3">Health check</p>
+					{% if health_status.database %}
+					<li class="mb-2">
+						✅ Database OK
+						{% else %}
+						❌ Database error
+					</li>
+					{% endif %}
 
-                {% if health_status.server.ok %}
-                <p class="ml-3 text-sm mt-1">🟢 Server</p>
-                {% else %}
-                <p class="ml-3 text-sm mt-1">🔴 Server</p>
-                {% endif %}
+					{% if health_status.internet %}
+					<li class="mb-2">
+						✅ Internet connected
+						{% else %}
+						❌ Internet error
+					</li>
+					{% endif %}
 
-                {% if health_status.database %}
-                <p class="ml-3 text-sm mt-1">🟢 Database</p>
-                {% else %}
-                <p class="ml-3 text-sm mt-1">🔴 Database</p>
-                {% endif %}
+					{% if health_status.telegram_webhook %}
+					<li class="mb-2">
+						✅ Telegram webhook OK
+						{% else %}
+						❌ Telegram webhook error
+					</li>
+					{% endif %}
+				</ul>
+			</div>
+			<!-- Send Onboarding Email Card -->
+			<div class="bg-white p-6 rounded-lg shadow-lg" x-data="onboardingApp()">
+				<p class="text-xl font-bold mb-4">
+					Send Onboarding Email
+				</p>
+				<div>
+					<input class="px-4 py-2 border rounded w-full mb-4" placeholder="Enter email address"
+						type="email" x-model="user_email" @input="validateEmail" />
+					<p class="text-red-500" x-show="user_email.length > 0 && !isValidEmail">Please enter a valid email
+						address.</p>
+					<button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+						:class="{'opacity-50 cursor-not-allowed': !isValidEmail}"
+						:disabled="!isValidEmail" @click="send_email()">
+						Send Email
+					</button>
+				</div>
+			</div>
 
-                {% if health_status.telegram_webhook %}
-                <p class="ml-3 text-sm mt-1">🟢 Telegram webhook</p>
-                {% else %}
-                <p class="ml-3 text-sm mt-1">🔴 Telegram webhook</p>
-                {% endif %}
-            </div>
-        </div>
-    </body>
+			<div class="bg-white p-6 rounded-lg shadow-lg mt-6" x-data="serviceMessageApp()">
+				<p class="text-xl font-bold mb-4">
+					Send service message to <span class="text-red-600">all</span> users
+				</p>
+				<div>
+					<textarea class="px-4 py-2 border rounded w-full mb-4" placeholder="Enter service message"
+						x-model="service_message" @input="validateMessage"></textarea>
+					<div x-show="!showConfirmButton">
+						<button class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+							:class="{'opacity-50 cursor-not-allowed': !isValidMessage}"
+							:disabled="!isValidMessage" @click="showConfirmButton = true">
+							Send Service Message
+						</button>
+					</div>
+					<div x-show="showConfirmButton" class="flex mt-2">
+						<button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+							@click="send_service_message()">
+							Definitely send?
+						</button>
+						<button class="ml-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+							@click="showConfirmButton = false">
+							Wait, cancel
+						</button>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+
+
+		<script>
+			function onboardingApp() {
+				return {
+					user_email: '',
+					isValidEmail: false,
+
+					validateEmail() {
+						const re = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/;
+						this.isValidEmail = re.test(this.user_email);
+					},
+
+					send_email() {
+						fetch('/admin/send_beta_code_to_new_user', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								user_email: this.user_email,
+							}),
+						})
+							.then(response => response.json())
+							.then(data => {
+								alert(data.message);
+							})
+							.catch((error) => {
+								console.error('Error:', error);
+							});
+					}
+				}
+			}
+
+			function serviceMessageApp() {
+				return {
+					service_message: '',
+					isValidMessage: false,
+					showConfirmButton: false,
+
+					validateMessage() {
+						this.isValidMessage = this.service_message.length > 0;
+					},
+
+					send_service_message() {
+						fetch('/admin/send_service_message', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({ contents: this.service_message })
+						})
+							.then(response => response.json())
+							.then(data => {
+								alert(data.message);
+							})
+							.catch((error) => {
+								alert('Error sending service message');
+								console.error('Error:', error);
+							});
+						this.showConfirmButton = false;
+					}
+				}
+			}
+		</script>
+	</body>
 
 </html>

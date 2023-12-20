@@ -438,10 +438,13 @@ def check_webhook_health():
 
     url = f"{telegram_api_url}/getWebhookInfo"
 
-    r = requests.get(url)
-    response_json = r.json()
+    try:
+        r = requests.get(url)
+        response_json = r.json()
+    except:
+        return False
 
     return {
-        'ok': response_json['ok'],
+        'status': response_json['ok'],
         'pending_update_count': response_json['result']['pending_update_count']
     }
