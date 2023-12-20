@@ -724,6 +724,32 @@ def get_new_messages():
 # ADMIN #
 #########
 
+@app.route('/admin/send_service_message', methods=['POST'])
+def route_send_service_message():
+    # This is a route for the admin to send a service message to all users or a particular user - it is an API route that accepts a post request with JSON with the message contents and the user_id
+
+    auth = request.authorization
+    if not auth or not is_admin_password_valid(auth.username, auth.password):
+        return prompt_to_authenticate()
+
+    # Check that we have got data from the form
+    contents = request.json['contents']
+    if not contents:
+        return {
+            "status": "error",
+            "message": "No contents provided"
+        }, 400
+
+    # Send the message
+    send_service_message(
+        contents
+    )
+    return {
+        "status": "success",
+        "message": "Message sent"
+    }
+
+
 def send_service_message(
         contents,
         user_id=None
@@ -738,10 +764,10 @@ def send_service_message(
             if user.provider == "telegram":
                 telegram_provider_id_list_to_send_message_to.append(
                     user.provider_id)
-
     else:
         telegram_provider_id_list_to_send_message_to = [
-            user.provider_id for user in User.query.filter_by(provider="telegram").all()]
+            user.provider_id for user in User.query.filter_by(provider="telegram").all()
+        ]
 
     for telegram_provider_id in telegram_provider_id_list_to_send_message_to:
         telegram.send_telegram_message(
@@ -833,7 +859,6 @@ def check_health():
     }
 
 
-# Receive a form submission with the user data to onboard
 @app.post('/admin/send_beta_code_to_new_user')
 def send_beta_code_to_new_user():
     # This is a route for the admin to onboard a user by sending them a new beta code - it is an API route that accepts a post request with JSON with the user's email address and sends the onboarding email
