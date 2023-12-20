@@ -79,7 +79,6 @@
 					user_email: '',
 
 					send_email() {
-						window.alert(this.user_email)
 						fetch('/admin/send_beta_code_to_new_user', {
 							method: 'POST',
 							headers: {
