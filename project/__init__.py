@@ -841,7 +841,7 @@ def send_beta_code_to_new_user():
         return prompt_to_authenticate()
 
     # Check that we have got data from the form
-    user_email = request.json.get('user_email')
+    user_email = request.json['user_email']
     if not user_email:
         return {
             "status": "error",

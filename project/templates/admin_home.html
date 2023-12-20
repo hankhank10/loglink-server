@@ -65,7 +65,7 @@
 				</p>
 				<div>
 					<input class="px-4 py-2 border rounded w-full mb-4" placeholder="Enter email address"
-						type="email" x-bind="user_email" />
+						type="email" x-model="user_email" />
 					<button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
 						@click="send_email()">
 						Send Email
@@ -79,7 +79,8 @@
 					user_email: '',
 
 					send_email() {
-						fetch('/admin/send_onboarding_email', {
+						window.alert(this.user_email)
+						fetch('/admin/send_beta_code_to_new_user', {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
