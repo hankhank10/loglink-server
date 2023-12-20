@@ -1,111 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 
-    <head>
-        <meta charset="utf-8" />
-        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-        <title>
-            Loglink Admin
-        </title>
-        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-        <script src="//unpkg.com/alpinejs" defer></script>
+	<head>
+		<meta charset="utf-8" />
+		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+		<title>
+			Loglink Admin
+		</title>
+		<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+		<script src="//unpkg.com/alpinejs" defer></script>
 
-    </head>
+	</head>
 
-    <body class="bg-gray-100 py-10">
-        <div class="container mx-auto px-4 md:px-0">
-            <!-- Admin Dashboard Title -->
-            <p class="text-3xl font-bold mb-6">
-                Admin Dashboard
-            </p>
-            <!-- Health Check Card -->
-            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
-                <p class="text-xl font-bold mb-4">
-                    Health Check
-                </p>
-                <ul>
-                    {% if health_status.server.ok %}
-                    <li class="mb-2">
-                        ✅ Server OK
-                    </li>
-                    {% else %}
-                    <li class="mb-2">
-                        ❌ Server error
-                    </li>
-                    {% endif %}
+	<body class="bg-gray-100 py-10">
+		<div class="container mx-auto px-4 md:px-0">
+			<!-- Admin Dashboard Title -->
+			<p class="text-3xl font-bold mb-6">
+				Admin Dashboard
+			</p>
+			<!-- Health Check Card -->
+			<div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+				<p class="text-xl font-bold mb-4">
+					Health Check
+				</p>
+				<ul>
 
-                    {% if health_status.database %}
-                    <li class="mb-2">
-                        ✅ Database OK
-                    </li>
-                    {% else %}
-                    <li class="mb-2">
-                        ❌ Database error
-                    </li>
-                    {% endif %}
+					<li class="mb-2">
+						{% if health_status.server.ok %}
+						✅ Server OK
+						{% else %}
+						❌ Server error
+					</li>
+					{% endif %}
 
-                    {% if health_status.internet %}
-                    <li>
-                        ✅ Internet connected
-                    </li>
-                    {% else %}
-                    <li>
-                        ❌ Internet error
-                    </li>
-                    {% endif %}
+					{% if health_status.database %}
+					<li class="mb-2">
+						✅ Database OK
+						{% else %}
+						❌ Database error
+					</li>
+					{% endif %}
 
-                    {% if health_status.telegram_webhook %}
-                    <li>
-                        ✅ Telegram webhook OK
-                    </li>
-                    {% else %}
-                    <li>
-                        ❌ Telegram webhook error
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-            <!-- Send Onboarding Email Card -->
-            <div class="bg-white p-6 rounded-lg shadow-lg" x-data="onboardingApp()">
-                <p class="text-xl font-bold mb-4">
-                    Send Onboarding Email
-                </p>
-                <div>
-                    <input class="px-4 py-2 border rounded w-full mb-4" placeholder="Enter email address"
-                        type="email" x-bind="user_email" />
-                    <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        @click="send_email()">
-                        Send Email
-                    </button>
-                </div>
-            </div>
-        </div>
-        <script>
-            function onboardingApp() {
-                return {
-                    user_email: '',
+					{% if health_status.internet %}
+					<li class="mb-2">
+						✅ Internet connected
+						{% else %}
+						❌ Internet error
+					</li>
+					{% endif %}
 
-                    send_email() {
-                        fetch('/admin/send_onboarding_email', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                user_email: this.user_email,
-                            }),
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                alert(data.message);
-                            })
-                            .catch((error) => {
-                                console.error('Error:', error);
-                            });
-                    }
-                }
-            }
-        </script>
-    </body>
+					{% if health_status.telegram_webhook %}
+					<li class="mb-2">
+						✅ Telegram webhook OK
+						{% else %}
+						❌ Telegram webhook error
+					</li>
+					{% endif %}
+				</ul>
+			</div>
+			<!-- Send Onboarding Email Card -->
+			<div class="bg-white p-6 rounded-lg shadow-lg" x-data="onboardingApp()">
+				<p class="text-xl font-bold mb-4">
+					Send Onboarding Email
+				</p>
+				<div>
+					<input class="px-4 py-2 border rounded w-full mb-4" placeholder="Enter email address"
+						type="email" x-bind="user_email" />
+					<button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+						@click="send_email()">
+						Send Email
+					</button>
+				</div>
+			</div>
+		</div>
+		<script>
+			function onboardingApp() {
+				return {
+					user_email: '',
+
+					send_email() {
+						fetch('/admin/send_onboarding_email', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								user_email: this.user_email,
+							}),
+						})
+							.then(response => response.json())
+							.then(data => {
+								alert(data.message);
+							})
+							.catch((error) => {
+								console.error('Error:', error);
+							});
+					}
+				}
+			}
+		</script>
+	</body>
 
 </html>
