@@ -30,7 +30,7 @@ telegram_webhook_auth = os.environ.get("TELEGRAM_WEBHOOK_AUTH")
 sentry_dsn = os.environ.get("SENTRY_DSN")
 
 # Admin password
-admin_username = "admin"
+admin_username = os.environ.get("ADMIN_USERNAME")
 admin_password = os.environ.get("ADMIN_PASSWORD")
 
 # Email credentials
