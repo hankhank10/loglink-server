@@ -838,6 +838,7 @@ def admin_home():
         'admin_home.html',
         health_status=check_health(),
         stats=check_stats(),
+        user_list=User.query.order_by(User.api_call_count.desc()).all()
     )
 
 
