@@ -740,6 +740,9 @@ def route_send_service_message():
             "message": "No contents provided"
         }, 400
 
+    # Format the message
+    contents = f"*SERVICE MESSAGE FROM LOGLINK*: {contents}"
+
     # Send the message
     send_service_message(
         contents
