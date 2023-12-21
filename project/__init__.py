@@ -622,7 +622,7 @@ if not creating_db:
 
 @app.route('/')
 def index():
-    return "🟢 API is running"
+    return "✅ API is running"
 
 
 @app.route('/get_new_messages/', methods=['POST'])
