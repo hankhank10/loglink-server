@@ -117,6 +117,37 @@
 				</table>
 			</div>
 
+			<!-- Beta code list -->
+			<div class="bg-white p-6 rounded-lg shadow-lg mb-6" x-data="{ open: false }">
+				<div class="flex justify-between items-center">
+					<p class="text-xl font-bold mb-4">
+						Beta codes
+					</p>
+					<button @click="open = !open">
+						<img x-show="!open" width="20" height="20"
+							src="https://img.icons8.com/ios/50/expand-arrow--v1.png"
+							alt="expand-arrow--v1" />
+						<img x-show="open" width="20" height="20"
+							src="https://img.icons8.com/ios/50/collapse-arrow--v1.png"
+							alt="collapse-arrow--v1" />
+					</button>
+				</div>
+				<table x-show="open" class="table-auto w-full">
+					<thead>
+						<tr>
+							<th class="px-4 py-2">Beta code</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for code in beta_code_list %}
+						<tr>
+							<td class="border px-4 py-2">{{ code }}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+
 			<!-- Send Onboarding Email Card -->
 			<div class="bg-white p-6 rounded-lg shadow-lg mb-6" x-data="onboardingApp()">
 				<p class="text-xl font-bold mb-4">

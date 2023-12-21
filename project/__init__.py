@@ -76,7 +76,7 @@ require_user_to_have_own_cloud_account = True
 # Message strings
 message_string = {
     "problem_creating_user_generic": "There was a problem creating your account.",
-    "provider_id_already_in_use": "Your Telegram chat ID is already registered. Please delete your previous account with /delete and then re-register.",
+    "provider_id_already_in_use": "Your Telegram chat ID is already registered. Please delete your previous account with /delete_account_confirm and then re-register.",
     "start_with_start_please": "Please type /start followed by your beta code to get started.",
     "beta_code_not_found": "LogLink is currently in beta and as such to sign up you must start the bot with the command /start followed by your beta code. You either didn't provide a code or it wasn't recognised.^^You can apply for a beta code at "+app_uri,
     "problem_creating_user_whitelist": "There was a problem creating your account. This may be because your mobile number is not on the whitelist.",
@@ -858,7 +858,8 @@ def admin_home():
         'admin_home.html',
         health_status=check_health(),
         stats=check_stats(),
-        user_list=User.query.order_by(User.api_call_count.desc()).all()
+        user_list=User.query.order_by(User.api_call_count.desc()).all(),
+        beta_code_list=list_of_beta_codes(),
     )
 
 
