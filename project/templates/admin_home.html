@@ -161,6 +161,7 @@
 							.then(response => response.json())
 							.then(data => {
 								alert(data.message);
+								this.service_message = '';
 							})
 							.catch((error) => {
 								alert('Error sending service message');
