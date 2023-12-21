@@ -187,6 +187,7 @@ def telegram_webhook():
         if not user:
             if 'text' in data['message']:
                 new_user_message_contents = data['message']['text']
+                logging.warning(f"New user message contents: {new_user_message_contents}"")
                 if new_user_message_contents.startswith('/start'):
                     beta_code_provided = new_user_message_contents[7:].strip()
 
