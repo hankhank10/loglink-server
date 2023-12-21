@@ -98,10 +98,11 @@
 				<table x-show="open" class="table-auto w-full">
 					<thead>
 						<tr>
-							<th class="px-4 py-2">User ID</th>
-							<th class="px-4 py-2">Provider ID</th>
+							<th class="px-4 py-2 text-left">User ID</th>
+							<th class="px-4 py-2 text-left">Provider ID</th>
 							<th class="px-4 py-2">Pending message count</th>
 							<th class="px-4 py-2">API Call Count</th>
+							<th class="px-4 py-2">imgBB set up</th>
 							<th class="px-4 py-2">Last API Call</th>
 						</tr>
 					</thead>
@@ -110,8 +111,13 @@
 						<tr>
 							<td class="border px-4 py-2">{{ user.id }}</td>
 							<td class="border px-4 py-2">{{ user.provider_id }}</td>
-							<td class="border px-4 py-2">{{ user.message_count }}</td>
-							<td class="border px-4 py-2">{{ user.api_call_count }}</td>
+							<td class="border px-4 py-2 text-center">{{ user.message_count }}</td>
+							<td class="border px-4 py-2 text-center">{{ user.api_call_count }}</td>
+							{% if user.imgbb_api_key %}
+							<td class="border px-4 py-2 text-center">✅</td>
+							{% else %}
+							<td class="border px-4 py-2 text-center">❌</td>
+							{% endif %}
 							<td class="border px-4 py-2">{{ user.last_message_timestamp_readable }}</td>
 						</tr>
 						{% endfor %}
@@ -137,7 +143,7 @@
 				<table x-show="open" class="table-auto w-full">
 					<thead>
 						<tr>
-							<th class="px-4 py-2">Beta code</th>
+							<th class="px-4 py-2 text-left">Beta code</th>
 						</tr>
 					</thead>
 					<tbody>
