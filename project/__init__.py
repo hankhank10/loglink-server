@@ -141,6 +141,10 @@ class User(db.Model):
         return Message.query.filter_by(user_id=self.id).all()
 
     @property
+    def message_count(self):
+        return Message.query.filter_by(user_id=self.id).count()
+
+    @property
     def last_message_timestamp(self):
         return Message.query.filter_by(user_id=self.id).order_by(Message.timestamp.desc()).first().timestamp
 
@@ -301,10 +305,10 @@ def is_user_able_to_upload_to_cloud(user_id):
 
 
 def create_new_user(
-    provider,
-    provider_id,
-    approved=True,
-    beta_code=None
+        provider,
+        provider_id,
+        approved=True,
+        beta_code=None
 ):
 
     if provider not in valid_providers:
@@ -338,10 +342,10 @@ def create_new_user(
 
 
 def add_new_message(
-    user_id,
-    provider,
-    message_contents,
-    provider_message_id=None,
+        user_id,
+        provider,
+        message_contents,
+        provider_message_id=None,
 ):
 
     # Get the user record
@@ -372,11 +376,11 @@ def add_new_message(
 
 
 def compose_location_message_contents(
-        location_latitude,
-        location_longitude,
-        location_name=None,
-        location_address=None,
-        location_url=None,
+    location_latitude,
+    location_longitude,
+    location_name=None,
+    location_address=None,
+    location_url=None,
 ):
 
     message_contents = None
@@ -409,9 +413,9 @@ def compose_location_message_contents(
 
 
 def compose_image_message_contents(
-    image_file_path,
-    imgbb_api_key=None,
-    caption=None
+        image_file_path,
+        imgbb_api_key=None,
+        caption=None
 ):
 
     # If we require the user to have their own cloud account, check whether they have one
@@ -479,10 +483,10 @@ def set_user_imgbb_api_key(user_id, imgbb_api_key):
 
 
 def send_message(
-    provider,
-    provider_id,
-    contents,
-    disable_notification=False,
+        provider,
+        provider_id,
+        contents,
+        disable_notification=False,
 ):
 
     if provider not in valid_providers:
@@ -497,11 +501,11 @@ def send_message(
 
 
 def send_picture_message(
-    provider,
-    provider_id,
-    image_url,
-    animation=False,
-    caption=None,
+        provider,
+        provider_id,
+        image_url,
+        animation=False,
+        caption=None,
 ):
 
     if provider not in valid_providers:
@@ -520,9 +524,9 @@ def send_picture_message(
 
 
 def onboarding_workflow(
-    provider,
-    provider_id,
-    beta_code=None,
+        provider,
+        provider_id,
+        beta_code=None,
 ):
 
     if provider not in valid_providers:
@@ -565,8 +569,8 @@ def onboarding_workflow(
 
 
 def offboarding_workflow(
-    provider,
-    provider_id
+        provider,
+        provider_id
 ):
     if provider not in valid_providers:
         return False
@@ -597,9 +601,9 @@ def offboarding_workflow(
 
 
 def help_send_new_token(
-    user_id,
-    provider,
-    provider_id
+        user_id,
+        provider,
+        provider_id
 ):
     # Check the user is found
     user = User.query.filter_by(id=user_id).first()
@@ -621,9 +625,9 @@ def help_send_new_token(
 
 
 def help_more_help(
-    user_id,
-    provider,
-    provider_id
+        user_id,
+        provider,
+        provider_id
 ):
     send_message(provider, provider_id, message_string["more_help"])
     return True
@@ -774,8 +778,8 @@ def route_send_service_message():
 
 
 def send_service_message(
-    contents,
-    user_id=None
+        contents,
+        user_id=None
 ):
     # Send a service message to a particular user, or if a user_id is not provided, to all users
 
@@ -820,8 +824,8 @@ def check_stats():
 
 
 def is_admin_password_valid(
-    admin_username,
-    admin_password
+        admin_username,
+        admin_password
 ):
 
     if admin_username != envars.admin_username:
