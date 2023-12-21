@@ -24,7 +24,7 @@ from email_validator import validate_email, EmailNotValidError
 
 # Sentry for error logging
 # Disable this if you have self deployed and don't want to send errors to Sentry
-sentry_logging = False
+sentry_logging = True
 if sentry_logging:
     if envars.sentry_dsn:
         sentry_sdk.init(
