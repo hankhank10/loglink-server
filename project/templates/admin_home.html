@@ -59,10 +59,10 @@
 						{% endif %}
 					</li>
 
-					<li class="mb-2" x-data="{alpineError: false}">
-						<div x-show="alpineError">
+					<li class="mb-2" x-data="{alpineMessage: '✅ AlpineJS OK'}">
+						<span x-text="alpineMessage">
 							❌ AlpineJS error
-						</div>
+						</span>
 					</li>
 				</ul>
 			</div>
