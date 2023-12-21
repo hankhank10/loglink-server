@@ -23,6 +23,7 @@ h11==0.14.0
 heyoo==0.0.6
 httpcore==0.16.3
 httpx==0.23.1
+humanize==4.9.0
 idna==3.3
 imgur-python==0.2.4
 iniconfig==2.0.0
