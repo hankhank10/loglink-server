@@ -44,7 +44,7 @@ Thanks for your interest in LogLink.
 
 I am now ready to begin a very small alpha test for the Telegram version of the app. All of the details of how to get set up are available at https://loglink.it/ 
 
-If you want to sign up then you can use the beta access code {beta_code}.
+If you want to sign up then you can use the following beta access code {beta_code}
 
 One really important thing that you need to be clear on before you start is that you've read and understood the important security notice at https://loglink.it/security-notice/ - this isn't just the usual disclaimer stuff.
 
