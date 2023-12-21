@@ -202,7 +202,7 @@ def telegram_webhook():
                         return "ok", 200
                     else:
                         logging.error("Error onboarding user")
-                        return "error onboarding", 400
+                        return "error onboarding", 200
                 send_message(
                     provider=provider,
                     provider_id=message_received['telegram_chat_id'],
