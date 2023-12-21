@@ -30,32 +30,40 @@
 						✅ Server OK
 						{% else %}
 						❌ Server error
+						{% endif %}
 					</li>
-					{% endif %}
 
-					{% if health_status.database %}
 					<li class="mb-2">
+						{% if health_status.database %}
 						✅ Database OK
 						{% else %}
 						❌ Database error
-					</li>
-					{% endif %}
+						{% endif %}
 
-					{% if health_status.internet %}
+					</li>
+
 					<li class="mb-2">
+						{% if health_status.internet %}
 						✅ Internet connected
 						{% else %}
 						❌ Internet error
-					</li>
-					{% endif %}
+						{% endif %}
 
-					{% if health_status.telegram_webhook %}
+					</li>
+
 					<li class="mb-2">
+						{% if health_status.telegram_webhook %}
 						✅ Telegram webhook OK
 						{% else %}
 						❌ Telegram webhook error
+						{% endif %}
 					</li>
-					{% endif %}
+
+					<li class="mb-2" x-data="{alpineError: false}">
+						<div x-show="alpineError">
+							❌ AlpineJS error
+						</div>
+					</li>
 				</ul>
 			</div>
 
