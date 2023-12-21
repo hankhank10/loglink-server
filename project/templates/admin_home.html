@@ -131,6 +131,7 @@
 							.then(response => response.json())
 							.then(data => {
 								alert(data.message);
+								this.user_email = '';
 							})
 							.catch((error) => {
 								console.error('Error:', error);
