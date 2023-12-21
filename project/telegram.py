@@ -265,7 +265,7 @@ def telegram_webhook():
                                 message_string['imgbb_no_argument']
                             )
                         if argument:
-                            if imgbb.api_key_valid(argument):
+                            if imgbb.is_api_key_valid(argument):
                                 user.imgbb_api_key = argument
                                 db.session.commit()
                                 result = send_message(
