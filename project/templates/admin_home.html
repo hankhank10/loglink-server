@@ -58,6 +58,20 @@
 					{% endif %}
 				</ul>
 			</div>
+
+			<!-- Statistics Card -->
+			<div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+				<p class="text-xl font-bold mb-4">
+					Statistics
+				</p>
+				<p class="mb-2">
+					Number of users: <span class="font-bold">{{ stats.user_count }}</span>
+				</p>
+				<p>
+					Number of pending messages: <span class="font-bold">{{ stats.pending_message_count }}</span>
+				</p>
+			</div>
+
 			<!-- Send Onboarding Email Card -->
 			<div class="bg-white p-6 rounded-lg shadow-lg" x-data="onboardingApp()">
 				<p class="text-xl font-bold mb-4">

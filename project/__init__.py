@@ -791,6 +791,14 @@ def check_db():
     }
 
 
+def check_stats():
+    # A function that returns data from the database as to how many users there are, how many messages are pending delivery, etc
+    return {
+        'user_count': User.query.count(),
+        'pending_message_count': Message.query.count(),
+    }
+
+
 def is_admin_password_valid(
     admin_username,
     admin_password
@@ -829,6 +837,7 @@ def admin_home():
     return render_template(
         'admin_home.html',
         health_status=check_health(),
+        stats=check_stats(),
     )
 
 
