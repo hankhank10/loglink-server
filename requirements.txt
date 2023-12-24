@@ -15,6 +15,7 @@ dnspython==2.4.2
 email-validator==2.1.0.post1
 exceptiongroup==1.1.0
 Flask==2.2.2
+Flask-Cors==4.0.0
 Flask-Migrate==3.1.0
 Flask-SQLAlchemy==2.5.1
 fleep==1.0.1
