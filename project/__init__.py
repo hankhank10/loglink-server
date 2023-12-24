@@ -17,6 +17,7 @@ import sentry_sdk
 from flask import Flask, render_template, request, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 # Import secrets
 from . import envars
@@ -38,7 +39,6 @@ if sentry_logging:
 
 # Create the app
 app = Flask(__name__)
-CORS(app)
 
 
 # Create the DB
