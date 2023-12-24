@@ -17,6 +17,7 @@ import sentry_sdk
 from flask import Flask, render_template, request, jsonify, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_cors import CORS
 
 # Import secrets
 from . import envars
@@ -38,6 +39,8 @@ if sentry_logging:
 
 # Create the app
 app = Flask(__name__)
+CORS(app)
+
 
 # Create the DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///messages.sqlite3'
@@ -657,6 +660,7 @@ def get_new_messages():
         posted_json = request.get_json()
         user_id = posted_json.get('user_id')
     except:
+        logging.warn("Failure parsing JSON or no JSON received")
         return jsonify({
             'status': 'error',
             'error_type': 'failure_parsing_json',
@@ -673,16 +677,18 @@ def get_new_messages():
 
     # Check whether the user token provided is "dummy" in which case return some dummy data
     if user_id == "dummy":
-        new_messages = [
-            {
+        new_messages = []
+        for a in range(1, 5):
+            new_message = {
                 'id': 4242,
                 'provider': 'telegram',
                 'provider_message_id': 'abcdefg',
-                'contents': 'This is a dummy message',
+                'contents': f"This is dummy message {a}",
                 'timestamp': datetime.now(),
                 'delivered': True
             }
-        ]
+
+            new_messages = new_messages + [new_message]
 
     else:
         # Get the user record
