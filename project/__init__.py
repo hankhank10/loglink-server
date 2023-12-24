@@ -671,31 +671,45 @@ def get_new_messages():
             'message': 'No user_id provided in JSON'
         }, 400
 
-    # Get the user record
-    user = User.query.filter_by(token=user_id).first()
+    # Check whether the user token provided is "dummy" in which case return some dummy data
+    if user_id == "dummy":
+        new_messages = [
+            {
+                'id': 4242,
+                'provider': 'telegram',
+                'provider_message_id': 'abcdefg',
+                'contents': 'This is a dummy message',
+                'timestamp': datetime.now(),
+                'delivered': True
+            }
+        ]
 
-    if not user:
-        return {
-            'status': 'error',
-            'error_type': 'user_not_found',
-            'message': 'No user found with that token. Try refreshing your token at ' + app_uri + ' and is ensure it is correctly entered in settings.'
-        }, 404
+    else:
+        # Get the user record
+        user = User.query.filter_by(token=user_id).first()
 
-    # Get the messages from the database
-    messages = Message.query.filter_by(user_id=user.id).all()
+        if not user:
+            return {
+                'status': 'error',
+                'error_type': 'user_not_found',
+                'message': 'No user found with that token. Try refreshing your token at ' + app_uri + ' and is ensure it is correctly entered in settings.'
+            }, 404
 
-    new_messages = []
-    for message in messages:
-        if not message.delivered:
-            message.delivered = True
+        # Get the messages from the database
+        messages = Message.query.filter_by(user_id=user.id).all()
 
-            message_in_memory = message
-            new_messages.append(message_in_memory)
+        new_messages = []
+        for message in messages:
+            if not message.delivered:
+                message.delivered = True
 
-    # Mark them as read and delete them from the database
-    db.session.commit()
-    if delete_immediately:
-        delete_delivered_messages(user.id)
+                message_in_memory = message
+                new_messages.append(message_in_memory)
+
+        # Mark them as read and delete them from the database
+        db.session.commit()
+        if delete_immediately:
+            delete_delivered_messages(user.id)
 
     # Version checking
     # Check whether we have already checked the latest version
@@ -732,11 +746,6 @@ def get_new_messages():
 
     return jsonify({
         'status': 'success',
-        'user': {
-            'token': user.token,
-            'api_call_count': user.api_call_count,
-            'approved': user.approved,
-        },
         'messages': {
             'count': len(new_messages),
             'contents': new_messages

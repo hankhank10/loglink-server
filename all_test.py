@@ -275,6 +275,18 @@ def test_retrieve_message_fail():
         assert b'error' in response.data
 
 
+def test_dummy_message_receive_pass():
+    # Check that a dummy message is received
+    with app.test_client() as client:
+        response = client.post(
+            '/get_new_messages/',
+            json={
+                "user_id": "dummy",
+            }
+        )
+        assert response.status_code == 200
+
+
 def test_retrieve_message_valid():
     # Check that the message can be retrieved
     with app.test_client() as client:
