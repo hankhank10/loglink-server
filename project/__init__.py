@@ -39,7 +39,7 @@ if sentry_logging:
 
 # Create the app
 app = Flask(__name__)
-
+CORS(app)
 
 # Create the DB
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///messages.sqlite3'
