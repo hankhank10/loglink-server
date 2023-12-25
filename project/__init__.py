@@ -653,7 +653,7 @@ def index():
 @app.route('/get_new_messages/', methods=['POST'])
 def get_new_messages():
 
-    print(f"Received JSON: {request.get_json()}")
+    print("Message received")
 
     # Check that we have been sent JSON
     try:
