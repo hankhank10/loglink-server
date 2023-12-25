@@ -749,16 +749,16 @@ def get_new_messages():
             logging.error('Error comparing version numbers')
 
     # Build the message to return
-    response = {
+    response = jsonify({
         'status': 'success',
         'messages': {
             'count': len(new_messages),
             'contents': new_messages
         }
-    }
+    })
     response.headers.add('Access-Control-Allow-Origin', '*')
 
-    return jsonify(response), 200
+    return response, 200
 
 
 #########
