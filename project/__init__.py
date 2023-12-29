@@ -691,6 +691,20 @@ def get_new_messages():
 
             new_messages = new_messages + [new_message]
 
+        # Send an image message
+        sad_cat_caption = "sad cat"
+        sad_cat_url = "https://media.giphy.com/media/71PLYtZUiPRg4/giphy.gif"
+
+        image_message = {
+            'id': 4243,
+            'provider': 'telegram',
+            'provider_message_id': 'abcdefg',
+            'contents': f"{sad_cat_caption} ![{sad_cat_caption}]({sad_cat_url})",
+            'timestamp': datetime.now(),
+            'delivered': True
+        }
+        new_messages = new_messages + [image_message]
+
     else:
         # Get the user record
         user = User.query.filter_by(token=user_id).first()
