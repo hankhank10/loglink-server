@@ -5,6 +5,7 @@
 secretstuff.py
 .idea/*
 .venv/*
+venv/*
 secret_key
 whitelist.py
 .DS_Store
