@@ -117,7 +117,7 @@ media_urls = {
 valid_providers = ['telegram']
 
 # Beta settings
-telegram_require_beta_code = True
+telegram_require_beta_code = False
 
 
 # Define the model in which the user data, tokens and messages are stored
