@@ -59,6 +59,14 @@
 						{% endif %}
 					</li>
 
+					<li class="mb-2">
+						{% if telegram_require_beta_code %}
+						🧪 Requires beta code for signup
+						{% else %}
+						🥳 No beta code required for signup
+						{% endif %}
+					</li>
+
 					<li class="mb-2" x-data="{alpineMessage: '✅ AlpineJS OK'}">
 						<span x-text="alpineMessage">
 							❌ AlpineJS error

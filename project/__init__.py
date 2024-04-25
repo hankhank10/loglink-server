@@ -898,6 +898,7 @@ def admin_home():
         stats=check_stats(),
         user_list=User.query.order_by(User.api_call_count.desc()).all(),
         beta_code_list=list_of_beta_codes(),
+        telegram_require_beta_code=telegram_require_beta_code
     )
 
 
